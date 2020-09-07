@@ -24,6 +24,8 @@ public class CaaS {
 	    
             id     = new JSONObject();
 	    id.put("id", 0);
+
+	    JSONObject result = LoadModule("Cryptol");
 	    
 	    return true;
 	}
@@ -51,7 +53,7 @@ public class CaaS {
 
         netstring = Integer.toString(netstring_size) + ":" + netstring + ",";
 
-	System.out.println("Sending " + netstring);
+	System.out.println("Sending: " + netstring);
 	
 	out.print(netstring);
 
@@ -85,12 +87,35 @@ public class CaaS {
 
 	JSONObject resultJSON = new JSONObject(result);
 
+	System.out.println("Receiving: " + resultJSON.toString());
+	
 	//Need to check and change (increment?) ID.
+	//Pull out new state and save
+
+	JSONObject r = resultJSON.optJSONObject("result");
+	state.put("state", r.optString("state"));
 	
 	return resultJSON;
     }
     
-    public void LoadModule(String module_name) {
+    public JSONObject EvaluateExpression(JSONObject expression) {
+	JSONObject message = new JSONObject();
+	JSONObject params = new JSONObject();
+	message.put("params", params);
+	message.put("method", "evaluate expression");
+	params.put("expression", expression);
+
+	if(Send(message) == false) {
+	    //Some problem happened
+	    return null;
+	}
+
+	JSONObject result = Receive();
+
+	return result;
+    }
+    
+    public JSONObject LoadModule(String module_name) {
 	JSONObject message = new JSONObject();
 
 	message.put("method", "load module");
@@ -103,6 +128,35 @@ public class CaaS {
 	//reset state?
 
 	Send(message);
+
+	JSONObject result = Receive();
+
+	return result;
+    }
+
+    public JSONObject fromHex(String hex) {
+	JSONObject jhex = new JSONObject();
+	jhex.put("expression", "bits");
+	jhex.put("encoding", "hex");
+	jhex.put("data", hex);
+	jhex.put("width", hex.length() * 4);
+
+	return jhex;
+    }
+
+    public JSONObject fromHexArray(String hex[]) {
+	JSONObject jseq = new JSONObject();
+	jseq.put("expression", "sequence");
+
+	JSONArray data = new JSONArray();
+
+	for (int i = 0; i < hex.length; i++) {
+	    data.put(fromHex(hex[i]));
+	}
+
+	jseq.put("data", data);
+	
+	return jseq;
     }
     
     //For testing
@@ -113,7 +167,9 @@ public class CaaS {
 
 	caas.LoadModule("Primitive::Symmetric::Cipher::Block::AES");
 
-	System.out.println(caas.Receive().toString());
-	
+	String hex = "ab10";
+	JSONObject jhex = caas.fromHex(hex);
+	JSONObject hexResult = caas.EvaluateExpression(jhex);
+	System.out.println("Receiving: " + hexResult.toString());
     }
 }
