@@ -58,29 +58,36 @@ public class CaaS {
 	return true;
     }
 
-    public String Receive() {
+    public JSONObject Receive() {
 	String result = "";
 	try{
 	    int c, i;
 	    String length = "";
-	    while((c=in.read())!=':'){
+	    while((c=in.read())!=':' && c != -1){
 		length = length + ((char) c);
 	    }
-	    System.out.print(length + "\n");
+	    if(c == -1) return new JSONObject("");
 	    for(i = 0; i < Integer.parseInt(length); i++) {
 		c = in.read();
 		result = result + ((char) c);
 	    }
+	    if(c == -1) return new JSONObject("");
 	    c = in.read();
 	    if(c != ',') {
 		//Something went wrong
+		return new JSONObject("");
 	    }
 
 	} catch (Exception e) {
-	    e.printStackTrace();	    
+	    e.printStackTrace();
+	    return new JSONObject("");	   
 	}
 
-	return result;
+	JSONObject resultJSON = new JSONObject(result);
+
+	//Need to check and change (increment?) ID.
+	
+	return resultJSON;
     }
     
     public void LoadModule(String module_name) {
@@ -106,7 +113,7 @@ public class CaaS {
 
 	caas.LoadModule("Primitive::Symmetric::Cipher::Block::AES");
 
-	System.out.println(caas.Receive());
+	System.out.println(caas.Receive().toString());
 	
     }
 }
