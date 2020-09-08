@@ -9,8 +9,8 @@ public class CaaS {
     PrintStream out;
     BufferedReader in;
 
-    JSONObject state;
-    JSONObject id;
+    String state;
+    int id;
     
     //If the connection is successful, return true, otherwise return
     //false
@@ -19,11 +19,8 @@ public class CaaS {
 	    socket = new Socket(ip_address, port);
 	    out    = new PrintStream(socket.getOutputStream());
 	    in     = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-	    state  = new JSONObject();
-	    state.put("state", JSONObject.NULL);
-	    
-            id     = new JSONObject();
-	    id.put("id", 0);
+	    state  = null;
+            id     = 0;
 
 	    JSONObject result = LoadModule("Cryptol");
 	    
@@ -44,16 +41,21 @@ public class CaaS {
 	message.putOnce("jsonrpc", "2.0");
 
 	JSONObject params = message.optJSONObject("params");
+
+	if(state == null) {
+	    params.put("state", JSONObject.NULL);
+	} else {
+	    params.put("state", state);
+	}
 	
-	params.put("state", state.opt("state"));
-	message.put("id", id.optInt("id"));
+	message.put("id", id);
 
 	String netstring = message.toString();
 	int netstring_size = netstring.length();
 
         netstring = Integer.toString(netstring_size) + ":" + netstring + ",";
 
-	System.out.println("Sending: " + netstring);
+	System.out.println("Sending: " + message.toString());
 	
 	out.print(netstring);
 
@@ -89,11 +91,18 @@ public class CaaS {
 
 	System.out.println("Receiving: " + resultJSON.toString());
 	
-	//Need to check and change (increment?) ID.
-	//Pull out new state and save
+	//Need to check and change id
+	if(id != resultJSON.optInt("id")) {
+	    //We got the wrong response back
+	    //This is bad.
+	    return null;
+	}
 
+	id++;
+
+	//Pull out new state and save
 	JSONObject r = resultJSON.optJSONObject("result");
-	state.put("state", r.optString("state"));
+	state = r.optString("state");
 	
 	return resultJSON;
     }
@@ -170,6 +179,5 @@ public class CaaS {
 	String hex = "ab10";
 	JSONObject jhex = caas.fromHex(hex);
 	JSONObject hexResult = caas.EvaluateExpression(jhex);
-	System.out.println("Receiving: " + hexResult.toString());
     }
 }
