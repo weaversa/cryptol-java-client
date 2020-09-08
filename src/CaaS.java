@@ -5,12 +5,12 @@ import java.net.Socket;
 import org.json.*;
 
 public class CaaS {
-    Socket socket;
-    PrintStream out;
-    BufferedReader in;
+    private Socket socket;
+    private PrintStream out;
+    private BufferedReader in;
 
-    String state;
-    int id;
+    private String state;
+    private int id;
     
     //If the connection is successful, return true, otherwise return
     //false
@@ -36,7 +36,16 @@ public class CaaS {
 	//todo
     }
 
-    public boolean Send(JSONObject message) {
+    public void ResetState() {
+	state = null;
+	
+	//Load the prelude (we could instead save the prelude
+	//state directly after loading the prelude in `Connect` and
+	//assign that value to `state` here.
+	JSONObject result = LoadModule("Cryptol");
+    }
+    
+    private boolean Send(JSONObject message) {
 	//todo
 	message.putOnce("jsonrpc", "2.0");
 
@@ -62,7 +71,7 @@ public class CaaS {
 	return true;
     }
 
-    public JSONObject Receive() {
+    private JSONObject Receive() {
 	String result = "";
 	try{
 	    int c, i;
@@ -123,6 +132,23 @@ public class CaaS {
 
 	return result;
     }
+
+    public JSONObject EvaluateExpression(String expression) {
+	JSONObject message = new JSONObject();
+	JSONObject params = new JSONObject();
+	message.put("params", params);
+	message.put("method", "evaluate expression");
+	params.put("expression", expression);
+
+	if(Send(message) == false) {
+	    //Some problem happened
+	    return null;
+	}
+
+	JSONObject result = Receive();
+
+	return result;
+    }
     
     public JSONObject LoadModule(String module_name) {
 	JSONObject message = new JSONObject();
@@ -143,7 +169,7 @@ public class CaaS {
 	return result;
     }
 
-    public JSONObject fromHex(String hex) {
+    public JSONObject FromHex(String hex) {
 	JSONObject jhex = new JSONObject();
 	jhex.put("expression", "bits");
 	jhex.put("encoding", "hex");
@@ -153,31 +179,36 @@ public class CaaS {
 	return jhex;
     }
 
-    public JSONObject fromHexArray(String hex[]) {
+    public JSONObject FromHexArray(String hex[]) {
 	JSONObject jseq = new JSONObject();
 	jseq.put("expression", "sequence");
 
 	JSONArray data = new JSONArray();
 
 	for (int i = 0; i < hex.length; i++) {
-	    data.put(fromHex(hex[i]));
+	    data.put(FromHex(hex[i]));
 	}
 
 	jseq.put("data", data);
 	
 	return jseq;
     }
-    
+
     //For testing
     public static void main(String[] args) {
 	CaaS caas = new CaaS();
 	boolean success = caas.Connect(args[0], Integer.parseInt(args[1]));
 	System.out.println("Success: " + success);
 
+	JSONObject hexResult;
+	hexResult =
+	    caas.EvaluateExpression(caas.FromHex("ab10"));
+	//or,
+	hexResult =
+	    caas.EvaluateExpression("0xab10");
+	
 	caas.LoadModule("Primitive::Symmetric::Cipher::Block::AES");
-
-	String hex = "ab10";
-	JSONObject jhex = caas.fromHex(hex);
-	JSONObject hexResult = caas.EvaluateExpression(jhex);
+	JSONObject aesResult =
+	    caas.EvaluateExpression("aesEncrypt(10, 11)");
     }
 }
