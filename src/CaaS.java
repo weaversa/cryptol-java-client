@@ -49,7 +49,7 @@ public class CaaS {
 	//todo
 	message.putOnce("jsonrpc", "2.0");
 
-	JSONObject params = message.optJSONObject("params");
+	JSONObject params = message.getJSONObject("params");
 
 	if(state == null) {
 	    params.put("state", JSONObject.NULL);
@@ -98,10 +98,8 @@ public class CaaS {
 
 	JSONObject resultJSON = new JSONObject(result);
 
-	System.out.println("Receiving: " + resultJSON.toString());
-	
 	//Need to check and change id
-	if(id != resultJSON.optInt("id")) {
+	if(id != resultJSON.getInt("id")) {
 	    //We got the wrong response back
 	    //This is bad.
 	    return null;
@@ -110,10 +108,12 @@ public class CaaS {
 	id++;
 
 	//Pull out new state and save
-	JSONObject r = resultJSON.optJSONObject("result");
-	state = r.optString("state");
+	JSONObject r = resultJSON.getJSONObject("result");
+	state = r.getString("state");
+
+	System.out.println("Result: " + r.toString());
 	
-	return resultJSON;
+	return r;
     }
     
     public JSONObject EvaluateExpression(JSONObject expression) {
@@ -133,12 +133,12 @@ public class CaaS {
 	return result;
     }
 
-    public JSONObject EvaluateExpression(String expression) {
+    public JSONObject EvaluateExpression(String command) {
 	JSONObject message = new JSONObject();
 	JSONObject params = new JSONObject();
 	message.put("params", params);
 	message.put("method", "evaluate expression");
-	params.put("expression", expression);
+	params.put("expression", command);
 
 	if(Send(message) == false) {
 	    //Some problem happened
@@ -169,24 +169,24 @@ public class CaaS {
 	return result;
     }
 
-    public JSONObject FromHex(String hex) {
+    public JSONObject FromHex(String hex, int numBits) {
 	JSONObject jhex = new JSONObject();
 	jhex.put("expression", "bits");
 	jhex.put("encoding", "hex");
 	jhex.put("data", hex);
-	jhex.put("width", hex.length() * 4);
+	jhex.put("width", numBits);
 
 	return jhex;
     }
 
-    public JSONObject FromHexArray(String hex[]) {
+    public JSONObject FromHexArray(String hex[], int numBits) {
 	JSONObject jseq = new JSONObject();
 	jseq.put("expression", "sequence");
 
 	JSONArray data = new JSONArray();
 
 	for (int i = 0; i < hex.length; i++) {
-	    data.put(FromHex(hex[i]));
+	    data.put(FromHex(hex[i], numBits));
 	}
 
 	jseq.put("data", data);
@@ -194,6 +194,60 @@ public class CaaS {
 	return jseq;
     }
 
+    /**
+     * Create a hex string from a json expression.
+     * Sample input ---
+     *   { "data": "1" , "width": 8, "expression": "bits", "encoding": "hex" }
+     */
+
+    //Does not return length, yet.
+    public String GetHex(JSONObject bv) {
+	String expression, encoding, data;
+	int width;
+
+	//Check for correct expression tag
+	try {
+	    expression = bv.getString("expression");
+	} catch (JSONException e) {
+	    System.out.println("Missing 'expression' tag");
+	    return null;
+	}
+	if(!expression.equals("bits")) {
+	    System.out.println("'expression' tag not \"bits\"");
+	}
+
+	//Check for correct encoding tag
+	try {
+	    encoding = bv.getString("encoding");
+	} catch (JSONException e) {
+	    System.out.println("Missing 'encoding' tag");
+	    return null;
+	}
+	if(!encoding.equals("hex")) {
+	    System.out.println("'encoding' tag not \"hex\"");
+	}
+
+	//Get data
+	try {
+	    data = bv.getString("data");
+	} catch (JSONException e) {
+	    System.out.println("Missing 'data' tag");
+	    return null;
+	}
+
+	System.out.println(bv.toString());
+	
+	//Get width
+	try {
+	    width = bv.getInt("width");
+	} catch (JSONException e) {
+	    System.out.println("Missing 'width' tag");
+	    return null;
+	}
+
+	return data;	
+    }
+    
     //For testing
     public static void main(String[] args) {
 	CaaS caas = new CaaS();
@@ -202,7 +256,7 @@ public class CaaS {
 
 	JSONObject hexResult;
 	hexResult =
-	    caas.EvaluateExpression(caas.FromHex("ab10"));
+	    caas.EvaluateExpression(caas.FromHex("ab10", 16));
 	//or,
 	hexResult =
 	    caas.EvaluateExpression("0xab10");
@@ -210,5 +264,9 @@ public class CaaS {
 	caas.LoadModule("Primitive::Symmetric::Cipher::Block::AES");
 	JSONObject aesResult =
 	    caas.EvaluateExpression("aesEncrypt(10, 11)");
+
+	String ct = caas.GetHex(aesResult.getJSONObject("answer").getJSONObject("value"));
+
+	System.out.println("ct = 0x" + ct);
     }
 }
