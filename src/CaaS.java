@@ -129,8 +129,6 @@ public class CaaS {
 
 	id++;
 
-	System.out.println(resultJSON.toString());
-	
 	//Pull out new state and save
 	JSONObject r = resultJSON.getJSONObject("result");
 	states.push(r.getString("state"));
