@@ -129,6 +129,8 @@ public class CaaS {
 
 	id++;
 
+	System.out.println(resultJSON.toString());
+	
 	//Pull out new state and save
 	JSONObject r = resultJSON.getJSONObject("result");
 	states.push(r.getString("state"));
@@ -171,16 +173,36 @@ public class CaaS {
 
 	return result;
     }
+
+    public JSONObject GetAnswer(JSONObject result) {
+	JSONObject answer, value;
+	
+	try {
+	    answer = result.getJSONObject("answer");
+	} catch (JSONException e) {
+	    System.out.println("Problem with 'answer' tag: " + e.toString());
+	    return null;
+	}
+
+	try {
+	    value = answer.getJSONObject("value");
+	} catch (JSONException e) {
+	    System.out.println("Problem with 'value' tag: " + e.toString());
+	    return null;
+	}
+	
+	return value;
+    }
     
-    public JSONObject LoadModule(String module_name) {
+    public JSONObject LoadModule(String moduleName) {
 	JSONObject message = new JSONObject();
 
 	message.put("method", "load module");
 
-	JSONObject moduleName = new JSONObject();
-	moduleName.put("module name", module_name);
+	JSONObject module = new JSONObject();
+	module.put("module name", moduleName);
 
-	message.put("params", moduleName);
+	message.put("params", module);
 
 	//reset state?
 
@@ -191,6 +213,56 @@ public class CaaS {
 	return result;
     }
 
+    public JSONObject Call(String functionName, JSONArray arguments) {
+	JSONObject function = new JSONObject();
+
+	function.put("expression", "call");
+	function.put("function", functionName);
+	function.put("arguments", arguments);
+
+	return function;
+    }
+
+    public JSONArray AddArgument(JSONArray arguments, JSONObject argument) {
+	if(arguments == null) {
+	    arguments = new JSONArray();
+	}
+
+	arguments.put(argument);
+	
+	return arguments;
+    }
+
+    public JSONArray AddArgument(JSONArray arguments, String argument, int numBits) {
+	return AddArgument(arguments, FromHex(argument, numBits));
+    }
+
+    public JSONObject AddToTuple(JSONObject tuple, JSONObject value) {
+	JSONArray data;
+	
+	if(tuple == null) {
+	    tuple = new JSONObject();
+	    tuple.put("expression", "tuple");
+	    data = new JSONArray();
+	    tuple.put("data", data);
+	} else {
+	    try {
+		data = tuple.getJSONArray("data");
+	    } catch (JSONException e) {
+		System.out.println("Problem with 'data' tag: " + e.toString());
+		return tuple;
+	    }
+	}
+
+	data.put(value);
+
+	return tuple;
+    }
+
+    public JSONObject AddToTuple(JSONObject tuple, String value, int numBits) {
+	return AddToTuple(tuple, FromHex(value, numBits));	
+    }
+    
     public JSONObject FromHex(String hex, int numBits) {
 	JSONObject jhex = new JSONObject();
 	jhex.put("expression", "bits");
@@ -200,7 +272,7 @@ public class CaaS {
 
 	return jhex;
     }
-
+    
     public JSONObject FromHexArray(String hex[], int numBits) {
 	JSONObject jseq = new JSONObject();
 	jseq.put("expression", "sequence");
@@ -317,7 +389,7 @@ public class CaaS {
 	caas.LoadModule("Primitive::Symmetric::Cipher::Block::AES");
 	JSONObject aesResult =
 	    caas.EvaluateExpression("aesEncrypt(10, 11)");
-	String ct = caas.GetHex(aesResult.getJSONObject("answer").getJSONObject("value"));
+	String ct = caas.GetHex(caas.GetAnswer(aesResult));
 
 	System.out.println("ct = 0x" + ct);
 
@@ -329,8 +401,9 @@ public class CaaS {
 
 	String[] hexArrayResult =
 	    caas.GetHexArray(
-	        caas.EvaluateExpression(
-                    caas.FromHexArray(new String[]{"ab", "bc", "de"}, 8)).getJSONObject("answer").getJSONObject("value"));
+		caas.GetAnswer(
+	            caas.EvaluateExpression(
+                        caas.FromHexArray(new String[]{"ab", "bc", "de"}, 8))));
 
 	for(int i = 0; i < hexArrayResult.length; i++) {
 	    System.out.print(hexArrayResult[i] + " ");
@@ -339,8 +412,19 @@ public class CaaS {
 	
 	caas.LoadModule("Primitive::Symmetric::Cipher::Block::AES");
 	aesResult =
-	    caas.EvaluateExpression("aesEncrypt(10, 11)");
-	ct = caas.GetHex(aesResult.getJSONObject("answer").getJSONObject("value"));
-	
+	    caas.EvaluateExpression("aesEncrypt(1, 2)");
+	ct = caas.GetHex(caas.GetAnswer(aesResult));
+
+	System.out.println(ct + "\n");
+
+	JSONObject tuple = null;
+	tuple = caas.AddToTuple(tuple, "1", 128);
+	tuple = caas.AddToTuple(tuple, "2", 128);
+	JSONArray aesArguments = null;
+	aesArguments = caas.AddArgument(aesArguments, tuple);
+	aesResult =
+	    caas.EvaluateExpression(caas.Call("aesEncrypt", aesArguments));
+	ct = caas.GetHex(caas.GetAnswer(aesResult));
+	System.out.println(ct + "\n");
     }
 }
