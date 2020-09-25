@@ -9,24 +9,20 @@ public class TestHarness {
 	boolean success = caas.Connect(args[0], Integer.parseInt(args[1]));
 	System.out.println("Success: " + success + "\n");
 
-	JSONObject hexResult;
-	hexResult =
-	    caas.EvaluateExpression(caas.FromHex("ab10", 16));
-	//or,
-	hexResult =
-	    caas.EvaluateExpression("0xab10");
+	String onePlusTwo =
+	    caas.GetHex(caas.GetAnswer(caas.EvaluateExpression("0xa + 0x1")));
+	System.out.println("0xa + 0x1 == 0x" + onePlusTwo + "\n");
 	
 	caas.LoadModule("Primitive::Symmetric::Cipher::Block::AES");
 	JSONObject aesResult =
 	    caas.EvaluateExpression("aesEncrypt(10, 11)");
 	String ct = caas.GetHex(caas.GetAnswer(aesResult));
-
-	System.out.println("ct = 0x" + ct);
+	System.out.println("aesEncrypt(10, 11) == 0x" + ct + "\n");
 
 	//Test state reset
 	caas.ResetState();
 
-	hexResult =
+	JSONObject hexResult =
 	    caas.EvaluateExpression("0xab10");
 
 	String[] hexArrayResult =
