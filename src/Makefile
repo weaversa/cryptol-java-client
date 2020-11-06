@@ -1,0 +1,16 @@
+EXTRAS = Makefile test/TestHarness.java
+
+SOURCES = org/CaaS/CaaS.java
+
+CLASSES = $(SOURCES:org/CaaS/%.java=org/CaaS/%.class)
+
+JAVAC = javac
+JAVA  = java
+JFLAGS =
+CLASSPATH = -cp org/Caas/:lib/json-java.jar
+
+default:
+	# find . -name '*.class' -execdir rm -- {} +
+	javac org/json/*.java
+	# javac -Xlint:unchecked na/na/na/*.java
+	javac na/na/na/*.java
