@@ -408,6 +408,7 @@ public class CaaS {
     }
     JSONObject message = call(functionName, jsonArguments);
     JSONObject params = new JSONObject();
+    params.put("state", states.peek());
     message.put("params", params);
     send(message);
     JSONObject result = receive();
