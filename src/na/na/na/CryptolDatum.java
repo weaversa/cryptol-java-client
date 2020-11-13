@@ -1,6 +1,6 @@
 package na.na.na;
 
-import java.util.BigInteger;
+import java.math.BigInteger;
 import org.json.*;
 
 /*
@@ -19,50 +19,159 @@ import org.json.*;
  
  */
 
-public class CryptolResult {
-  private JSONObject result = null;
+public class CryptolDatum {
+  private JSONObject jsonObject = null;
   private CryptolType type = null;
   private BigInteger word = null;
-  private int wordLength = 0;
-  private int modulus = 0;
+  private int wordSize = 0; // so we're disallowing [n] where n > Integer.MAX_VALUE == 2^^31 - 1
+  private BigInteger modulus = null; // n for Z n or 2^^n for [n] or 0 for Integer or null for other types
   
-  public int getWordLength() {
-    return wordLength;
+  public CryptolDatum(JSONObject jsonObject) {
+    this.jsonObject = jsonObject;
   }
   
-  public int getModulus() {
+  public int getWordSize() {
+    return wordSize;
+  }
+  
+  public BigInteger getModulus() {
     return modulus;
   }
   
-  public String getHexString() {
+  private void checkWordValue() {
     switch (type) {
       case WORD:
-        if null == word {
-          parse();
+        if (word.compareTo(modulus) >= 0) {
+          throw new UnsupportedOperationException("Parsed value exceeds maximum for the number bits in the bit sequence.");
         }
-        int hexChars = (wordLength + 3) >> 2;
+        break;
+      case RESIDUE:
+        if (0 != modulus.signum()) {
+          if (word.compareTo(modulus) >= 0) {
+            throw new UnsupportedOperationException("Parsed value meets or exceeds modulus.");
+          }
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  
+  public String getHexString() {
+    if (null == type) {
+      parse();
+    }
+    switch (type) {
+      case WORD:
+        if (null == word) {
+          throw new UnsupportedOperationException("Could not parse result from Cryptol");
+        }
+        if (0 != wordSize % 4) {
+          throw new UnsupportedOperationException("Word length not a multiple of 4 so hex string conversion failed.");
+        }
+        int hexChars = wordSize >> 2;
         String hexString = word.toString(16);
-        if (hexString.length() > hexChars) {
-          throw new UnsupportedOperationException("Word has too many bits.")
-        }
         while (hexString.length() < hexChars) {
           hexString = "0" + hexString;
         }
         return hexString;
-        break;
       case RESIDUE:
-        if null == word {
-          parse();
-        }
         return word.toString(16);
       default:
         throw new UnsupportedOperationException("getHexString only operates on Cryptol types [n], Integer or Z n.");
-        
+    }
+  }
+  
+  public String getBinString() {
+    if (null == type) {
+      parse();
+    }
+    switch (type) {
+      case WORD:
+        if (null == word) {
+          throw new UnsupportedOperationException("Could not parse result from Cryptol");
+        }
+        String binString = word.toString(2);
+        while (binString.length() < wordSize) {
+          binString = "0" + binString;
+        }
+        return binString;
+      case RESIDUE:
+        return word.toString(2);
+      default:
+        throw new UnsupportedOperationException("getBinString only operates on Cryptol types [n], Integer or Z n.");
+    }
+  }
+  
+  public String getDecString() {
+    if (null == type) {
+      parse();
+    }
+    switch (type) {
+      case WORD:
+        if (null == word) {
+          throw new UnsupportedOperationException("Could not parse result from Cryptol");
+        }
+        String decString = word.toString(10);
+        return decString;
+      case RESIDUE:
+        return word.toString(10);
+      default:
+        throw new UnsupportedOperationException("getBinString only operates on Cryptol types [n], Integer or Z n.");
     }
   }
   
   public BigInteger getBigInteger() {
-    
+    if (null == type) {
+      parse();
+    }
+    switch (type) {
+      case WORD:
+      case RESIDUE:
+        if (null == word) {
+          throw new UnsupportedOperationException("Could not parse result from Cryptol");
+        }
+        return word;
+      default:
+        throw new UnsupportedOperationException("getBigInteger only operates on Cryptol types [n], Integer or Z n.");
+    }
+  }
+  
+  private void parse() {
+    String expression = null;
+    try {
+      expression = jsonObject.getString("expression");
+    } catch (JSONException e) {
+      throw new UnsupportedOperationException("Could not access expression in JSON of Cryptol result.\nJSON: " + jsonObject.toString(), e);
+    }
+    String encoding = null;
+    if ("bits".equals(expression)) {
+      try {
+        encoding = jsonObject.getString("encoding");
+      } catch (JSONException e) {
+        throw new UnsupportedOperationException("Could not access encoding in JSON of Cryptol result.\nJSON: " + jsonObject.toString(), e);
+      }
+    } else {
+      throw new UnsupportedOperationException("Result from Cryptol not of type [n]\nJSON: " + jsonObject.toString());
+    }
+    String data = null;
+    if ("hex".equals(encoding)) {
+      try {
+        data = jsonObject.getString("data");
+      } catch (JSONException e) {
+        throw new UnsupportedOperationException("Could not access data in JSON of Cryptol result.\nJSON: " + jsonObject.toString(), e);
+      }
+    } else {
+      throw new UnsupportedOperationException("Result from Cryptol not in hex encoding.\nJSON: " + jsonObject.toString());
+    }
+    try {
+      wordSize = jsonObject.getInt("width");
+    } catch (JSONException e) {
+      throw new UnsupportedOperationException("Could not access width in JSON of Cryptol result.\nJSON: " + jsonObject.toString(), e);
+    }
+    word = new BigInteger(data, 16);
+    checkWordValue();
+    type = CryptolType.WORD;
   }
   
 }
