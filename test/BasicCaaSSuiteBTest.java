@@ -4,10 +4,19 @@ import na.na.na.*;
 public class BasicCaaSSuiteBTest {
   
   public static void main(String[] args) throws CaaSException {
+    
     System.out.println("Evaluating `sha224 '...");
     CryptolValue in0 = new CryptolValue(352, "54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f672e", 16);
     CryptolValue out = BasicCaaS.SUITE_B.callFunction("sha224", in0);
-    System.out.println(out);
+    System.out.println(out + "\n");
+    
+    CryptolValue k = new CryptolValue(128, "000102030405060708090a0b0c0d0e0f", 16);
+    CryptolValue ks = BasicCaaS.SUITE_B.callFunction("aes128EncryptSchedule", k);
+    System.out.println("\nks:\n" + ks + "\n");
+    CryptolValue pt = new CryptolValue(128, "00112233445566778899aabbccddeeff", 16);
+    CryptolValue ct = BasicCaaS.SUITE_B.callFunction("aesEncryptBlock", ks, pt);
+    System.out.println("\nct:\n" + ct + "\n");
+
   }
 }
     /*

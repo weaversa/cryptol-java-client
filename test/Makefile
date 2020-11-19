@@ -11,4 +11,4 @@ default:
 	rm -f CaaSTest.class
 	javac -cp ../src:. CaaSTest.java BasicCaaSSuiteBTest.java
 	java -cp ../src:. BasicCaaSSuiteBTest
-	#java -cp ../src:. CaaSTest localhost 65521
+	java -cp ../src:. CaaSTest localhost 65521

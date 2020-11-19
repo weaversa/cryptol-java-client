@@ -11,14 +11,14 @@ import org.json.*;
  convert to JSON at construction
  
  for WORD:
-   size >= 0
-   modulus == 2^size
-   modulus > 0 // implied from previous
-   0 <= bitseq < modulus
+ size >= 0
+ modulus == 2^size
+ modulus > 0 // implied from previous
+ 0 <= bitseq < modulus
  
  for RESIDUE:
-   modulus >= 0  // we are modeling Z_n where n is the modulus; Z_0 is Z
-   if modulus > 0, 0 <= bitseq < modulus
+ modulus >= 0  // we are modeling Z_n where n is the modulus; Z_0 is Z
+ if modulus > 0, 0 <= bitseq < modulus
  
  */
 
@@ -39,17 +39,17 @@ import org.json.*;
  */
 
 public class CryptolValue {
-  private boolean bit;
   private JSONObject json;
+  private CryptolType type;
+  private boolean bit;
   private BigInteger modulus; // n for Z n or 2^n for [n] or 0 for Integer or null for other types
   private int size = -1; // so we're disallowing [n] where n > Integer.MAX_VALUE == 2^^31 - 1
-  private CryptolType type;
   private BigInteger bitseq;
   
   protected CryptolValue(JSONObject jsonObject) {
     json = jsonObject;
   }
-
+  
   public CryptolValue(int bits, String digits, int radix) {
     size = bits;
     calculateModulus();
@@ -84,7 +84,7 @@ public class CryptolValue {
     type = CryptolType.BIT;
     toJSON();
   }
-    
+  
   protected JSONObject getJSON() {
     return json;
   }
@@ -216,40 +216,35 @@ public class CryptolValue {
   }
   
   private void fromJSON() {
+    JSONObject jsonObject = null;
+    if (json.has("expression")) {
+      jsonObject = json;
+    } else {
+      if (json.has("answer")) {
+        jsonObject = json.getJSONObject("answer");
+        jsonObject = jsonObject.getJSONObject("value");
+      }
+    }
     String expression = null;
-    try {
-      expression = json.getString("expression");
-    } catch (JSONException e) {
-      throw new UnsupportedOperationException("Could not access expression in JSON of Cryptol result.\nJSON: " + json.toString(), e);
-    }
     String encoding = null;
-    if ("bits".equals(expression)) {
-      try {
-        encoding = json.getString("encoding");
-      } catch (JSONException e) {
-        throw new UnsupportedOperationException("Could not access encoding in JSON of Cryptol result.\nJSON: " + json.toString(), e);
-      }
-    } else {
-      throw new UnsupportedOperationException("Result from Cryptol not of type [n]\nJSON: " + json.toString());
-    }
     String data = null;
-    if ("hex".equals(encoding)) {
-      try {
-        data = json.getString("data");
-      } catch (JSONException e) {
-        throw new UnsupportedOperationException("Could not access data in JSON of Cryptol result.\nJSON: " + json.toString(), e);
-      }
-    } else {
-      throw new UnsupportedOperationException("Result from Cryptol not in hex encoding.\nJSON: " + json.toString());
-    }
     try {
-      size = json.getInt("width");
+      expression = jsonObject.getString("expression");
+      encoding = jsonObject.getString("encoding");
+      data = jsonObject.getString("data");
+      size = jsonObject.getInt("width");
+      calculateModulus();
     } catch (JSONException e) {
-      throw new UnsupportedOperationException("Could not access width in JSON of Cryptol result.\nJSON: " + json.toString(), e);
+      throw new UnsupportedOperationException("Could not access expression, encoding or data in JSON of Cryptol result.\nJSON: " + json.toString(), e);
     }
-    bitseq = new BigInteger(data, 16);
-    checkValue();
-    type = CryptolType.WORD;
+    if (("bits".equals(expression)) && ("hex".equals(encoding))) {
+      bitseq = new BigInteger(data, 16);
+      type = CryptolType.WORD;
+      checkValue();
+      return;
+    } else {
+      throw new UnsupportedOperationException("JSON result from Cryptol troublesome.\nJSON: " + json.toString());
+    }
   }
   
   public boolean getBit() {
@@ -261,7 +256,58 @@ public class CryptolValue {
   }
   
   private void toJSON() {
-    // TODO
+    json = new JSONObject();
+    switch (type) {
+      case BIT:
+        json.put("value", bit);
+        break;
+      case WORD:
+        json.put("expression", "bits");
+        json.put("encoding", "hex");
+        json.put("data", bitseq.toString(16));
+        json.put("width", size);
+        break;
+      default:
+        throw new UnsupportedOperationException("Conversion to JSON unimplemented.");
+    }
   }
-                                              
+  
+  public String toString() {
+    try {
+      fromJSON();
+      switch (type) {
+        case BIT:
+          if (bit) {
+            return "True";
+          } else {
+            return "False";
+          }
+        case WORD:
+          if (0 == size % 4) {
+            String s = bitseq.toString(16);
+            while (size / 4 > s.length()) {
+              s = "0" + s;
+            }
+            return "0x" + s;
+          }
+          if (0 == size % 3) {
+            String s = bitseq.toString(8);
+            while (size / 3 > s.length()) {
+              s = "0" + s;
+            }
+            return "0o" + s;
+          }
+          String s = bitseq.toString(2);
+          while (size > s.length()) {
+            s = "0" + s;
+          }
+          return "0b" + s;
+        default:
+          throw new UnsupportedOperationException("Conversion to String unimplemented.");
+      }
+    } catch (Exception e) {
+      return json.toString();
+    }
+  }
+  
 }
