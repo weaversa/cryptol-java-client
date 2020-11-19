@@ -420,4 +420,49 @@ public class CaaS {
     return callHexFunction(functionName, new Vector<String>(Arrays.asList(hexArgument0)));
   }
   
+  public CryptolValue callFunction(String f) {
+    JSONArray args = new JSONArray();
+    return new CryptolValue(call(f, args));
+  }
+  
+  public CryptolValue callFunction(String f, CryptolValue in0) {
+    JSONArray args = new JSONArray();
+    args.put(in0.getJSON());
+    return new CryptolValue(call(f, args));
+  }
+  
+  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1) {
+    JSONArray args = new JSONArray();
+    args.put(in0.getJSON());
+    args.put(in1.getJSON());
+    return new CryptolValue(call(f, args));
+  }
+  
+  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2) {
+    JSONArray args = new JSONArray();
+    args.put(in0.getJSON());
+    args.put(in1.getJSON());
+    args.put(in2.getJSON());
+    return new CryptolValue(call(f, args));
+  }
+  
+  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2, CryptolValue in3) {
+    JSONArray args = new JSONArray();
+    args.put(in0.getJSON());
+    args.put(in1.getJSON());
+    args.put(in2.getJSON());
+    args.put(in3.getJSON());
+    return new CryptolValue(call(f, args));
+  }
+  
+  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2, CryptolValue in3, CryptolValue in4) {
+    JSONArray args = new JSONArray();
+    args.put(in0.getJSON());
+    args.put(in1.getJSON());
+    args.put(in2.getJSON());
+    args.put(in3.getJSON());
+    args.put(in4.getJSON());
+    return new CryptolValue(call(f, args));
+  }
+  
 }
