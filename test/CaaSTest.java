@@ -5,13 +5,45 @@ public class CaaSTest {
   
   //For testing
   public static void main(String[] args) throws CaaSException {
+    JSONArray arguments = new JSONArray();
+
     CaaS caas = new CaaS(args[0], Integer.parseInt(args[1]));
     System.out.println("Connected to CaaS without exception.\n");
 
+    System.out.println("Evaluating `False'...");
+    System.out.println(caas.evaluateExpression("False").toString());
+    System.out.println("");
+
+    System.out.println("");
     System.out.println("Evaluating `lg2 2'...");
-    System.out.println(caas.callUnaryHexFunction("lg2", "2"));
+    arguments = new JSONArray();
+    arguments.put(caas.fromHex("2", 2));
+    System.out.println(caas.call("lg2", arguments));
     System.out.println("");
     
+    System.out.println("");
+    caas.loadModule("SuiteB");
+    System.out.println("");
+    System.out.println("Evaluating `sha224 '...");
+    arguments = new JSONArray();
+    arguments.put(caas.fromHex("54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f672e", 352));
+    System.out.println(caas.call("sha224", arguments));
+    System.out.println("Should return 619cba8e8e05826e9b8c519c0a5c68f4fb653e8a3d8aa04bb2c8cd4c");
+
+    /*
+     According to Wikipedia:
+SHA224("The quick brown fox jumps over the lazy dog.") ~~>
+
+0x 619cba8e8e05826e9b8c519c0a5c68f4fb653e8a3d8aa04bb2c8cd4c
+
+     From Cryptol:
+     
+     join("The quick brown fox jumps over the lazy dog.") ~~>
+     
+     0x54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f672e
+     
+     */
+
     System.out.println("Evaluating `False'...");
     System.out.println(caas.evaluateExpression("False").toString());
     System.out.println("");
@@ -66,7 +98,6 @@ public class CaaSTest {
     }
     System.out.println();
     
-    //caas.loadModule("SuiteX");
     caas.loadModule("SuiteB");
     aesResult =
     caas.evaluateExpression("aesEncryptBlock (aes128EncryptSchedule 0x000102030405060708090a0b0c0d0e0f) 0x00112233445566778899aabbccddeeff");

@@ -75,6 +75,9 @@ public class CaaS {
   
   private void send(JSONObject message) throws CaaSException {
     message.putOnce("jsonrpc", "2.0");
+    if (!message.has("params")) {
+      message.putOnce("params", new JSONObject());
+    }
     JSONObject params = message.getJSONObject("params");
     if (states.empty() || null == states.peek()) {
       params.put("state", JSONObject.NULL);
@@ -226,14 +229,15 @@ public class CaaS {
     return result;
   }
   
-  public JSONObject call(String functionName, JSONArray arguments) {
-    JSONObject function = new JSONObject();
-    
-    function.put("expression", "call");
-    function.put("function", functionName);
-    function.put("arguments", arguments);
-    
-    return function;
+  public JSONObject call(String functionName, JSONArray arguments) throws CaaSException {
+    JSONObject params = new JSONObject();
+    params.put("function", functionName);
+    params.put("arguments", arguments);
+    JSONObject message = new JSONObject();
+    message.put("method", "call");
+    message.put("params", params);
+    send(message);
+    return receive();
   }
   
   public JSONArray addArgument(JSONArray arguments, JSONObject argument) {
@@ -276,7 +280,7 @@ public class CaaS {
     return addToTuple(tuple, fromHex(value, numBits));
   }
   
-  public JSONObject fromHex(String hex, int numBits) {
+  public static JSONObject fromHex(String hex, int numBits) {
     // System.out.println("*** " + hex + " " + numBits);
     JSONObject jhex = new JSONObject();
     jhex.put("expression", "bits");
@@ -287,11 +291,11 @@ public class CaaS {
     return jhex;
   }
 
-  public JSONObject fromHex(String hex) {
+  public static JSONObject fromHex(String hex) {
     return fromHex(hex, 4 * hex.length());
   }
   
-  public JSONObject fromHexArray(String hex[], int numBits) {
+  public static JSONObject fromHexArray(String hex[], int numBits) {
     JSONObject jseq = new JSONObject();
     jseq.put("expression", "sequence");
     
@@ -420,25 +424,25 @@ public class CaaS {
     return callHexFunction(functionName, new Vector<String>(Arrays.asList(hexArgument0)));
   }
   
-  public CryptolValue callFunction(String f) {
+  public CryptolValue callFunction(String f) throws CaaSException {
     JSONArray args = new JSONArray();
     return new CryptolValue(call(f, args));
   }
   
-  public CryptolValue callFunction(String f, CryptolValue in0) {
+  public CryptolValue callFunction(String f, CryptolValue in0) throws CaaSException {
     JSONArray args = new JSONArray();
     args.put(in0.getJSON());
     return new CryptolValue(call(f, args));
   }
   
-  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1) {
+  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1) throws CaaSException {
     JSONArray args = new JSONArray();
     args.put(in0.getJSON());
     args.put(in1.getJSON());
     return new CryptolValue(call(f, args));
   }
   
-  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2) {
+  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2) throws CaaSException {
     JSONArray args = new JSONArray();
     args.put(in0.getJSON());
     args.put(in1.getJSON());
@@ -446,7 +450,7 @@ public class CaaS {
     return new CryptolValue(call(f, args));
   }
   
-  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2, CryptolValue in3) {
+  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2, CryptolValue in3) throws CaaSException {
     JSONArray args = new JSONArray();
     args.put(in0.getJSON());
     args.put(in1.getJSON());
@@ -455,7 +459,7 @@ public class CaaS {
     return new CryptolValue(call(f, args));
   }
   
-  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2, CryptolValue in3, CryptolValue in4) {
+  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2, CryptolValue in3, CryptolValue in4) throws CaaSException {
     JSONArray args = new JSONArray();
     args.put(in0.getJSON());
     args.put(in1.getJSON());
@@ -464,5 +468,34 @@ public class CaaS {
     args.put(in4.getJSON());
     return new CryptolValue(call(f, args));
   }
+ 
+/*
+  public JSONObject callFunction(String f, JSONArray arguments) throws CaaSException {
+    JSONObject message = new JSONObject();
+    JSONObject params = new JSONObject();
+    message.put("params", params);
+    message.put("method", "call");
+    params.put("function", f);
+    params.put("arguments", arguments);
+    send(message);
+    return receive();
+  }
+ */
+  
+/*
+  public JSONObject callFunction(String f, JSONArray arguments) throws CaaSException {
+    JSONObject message = new JSONObject();
+    JSONObject params = new JSONObject();
+    message.put("params", params);
+    message.put("method", "evaluate expression");
+    params.put("expression", expression);
+    
+    send(message);
+    
+    JSONObject result = receive();
+    
+    return result;
+  }
+*/
   
 }
