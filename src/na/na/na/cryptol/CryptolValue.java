@@ -1,10 +1,12 @@
-package na.na.na;
+package na.na.na.cryptol;
 
 import java.math.BigInteger;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /*
- Desired invariants:
+ Intended invariants:
  
  convert from JSON when needed
  
@@ -26,9 +28,9 @@ import org.json.*;
  simple types
  
  Bit ~~> boolean
- [n] ~~> BigInteger + bitlength of n
- Z n ~~> BigInteger + modulus of n
- Integer ~~> BigInteger + modulus of n
+ [n] ~~> BigInteger + size of n
+ Z n ~~> BigInteger + modulus of n + size of -1
+ Integer ~~> BigInteger + modulus of 0 + size of -1
  
  complex types
  
@@ -46,7 +48,7 @@ public class CryptolValue {
   private int size = -1; // so we're disallowing [n] where n > Integer.MAX_VALUE == 2^^31 - 1
   private BigInteger bitseq;
   
-  protected CryptolValue(JSONObject jsonObject) {
+  public CryptolValue(JSONObject jsonObject) {
     json = jsonObject;
   }
   
@@ -85,9 +87,19 @@ public class CryptolValue {
     toJSON();
   }
   
-  protected JSONObject getJSON() {
+  public JSONObject getJSON() {
     return json;
   }
+  
+  public JSONObject getJSONForArgument() {
+    if (json.has("answer") && json.getJSONObject("answer").has("value")) {
+      return json.getJSONObject("answer").getJSONObject("value");
+    }
+    return json;
+  }
+
+
+  
   
   private static int computeSize(String digits, int radix) {
     switch (radix) {

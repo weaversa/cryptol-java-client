@@ -1,4 +1,4 @@
-package na.na.na;
+package na.na.na.cryptol.caas;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -9,9 +9,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 import java.util.Vector;
+//import na.na.na.cryptol.CryptolType;
+//import na.na.na.cryptol.CryptolValue;
 import org.json.*;
 
-public class CaaS {
+public class JSONFlavoredCaaS {
   private String hostOrIP;
   private InetAddress inetAddress;
   private int port;
@@ -24,7 +26,7 @@ public class CaaS {
   private boolean connected;
   private String latestModule;
   
-  public CaaS(String hostOrIP, int port) throws CaaSException {
+  public JSONFlavoredCaaS(String hostOrIP, int port) throws CaaSException {
     try {
       this.hostOrIP = hostOrIP;
       this.inetAddress = InetAddress.getByName(hostOrIP);
@@ -35,7 +37,7 @@ public class CaaS {
     reconnect();
   }
   
-  public CaaS(InetAddress inetAddress, int port) throws CaaSException {
+  public JSONFlavoredCaaS(InetAddress inetAddress, int port) throws CaaSException {
     this.inetAddress = inetAddress;
     this.port = port;
     reconnect();
@@ -423,85 +425,5 @@ public class CaaS {
   public String callUnaryHexFunction(String functionName, String hexArgument0) throws CaaSException {
     return callHexFunction(functionName, new Vector<String>(Arrays.asList(hexArgument0)));
   }
-  
-  public CryptolValue callFunction(String f) throws CaaSException {
-    JSONArray args = new JSONArray();
-    return new CryptolValue(call(f, args));
-  }
-  
-  public CryptolValue callFunction(String f, CryptolValue in0) throws CaaSException {
-    JSONArray args = new JSONArray();
-    args.put(contrive(in0.getJSON()));
-    return new CryptolValue(call(f, args));
-  }
-  
-  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1) throws CaaSException {
-    JSONArray args = new JSONArray();
-    args.put(contrive(in0.getJSON()));
-    args.put(contrive(in1.getJSON()));
-    return new CryptolValue(call(f, args));
-  }
-  
-  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2) throws CaaSException {
-    JSONArray args = new JSONArray();
-    args.put(contrive(in0.getJSON()));
-    args.put(contrive(in1.getJSON()));
-    args.put(contrive(in2.getJSON()));
-    return new CryptolValue(call(f, args));
-  }
-  
-  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2, CryptolValue in3) throws CaaSException {
-    JSONArray args = new JSONArray();
-    args.put(contrive(in0.getJSON()));
-    args.put(contrive(in1.getJSON()));
-    args.put(contrive(in2.getJSON()));
-    args.put(contrive(in3.getJSON()));
-    return new CryptolValue(call(f, args));
-  }
-  
-  public CryptolValue callFunction(String f, CryptolValue in0, CryptolValue in1, CryptolValue in2, CryptolValue in3, CryptolValue in4) throws CaaSException {
-    JSONArray args = new JSONArray();
-    args.put(contrive(in0.getJSON()));
-    args.put(contrive(in1.getJSON()));
-    args.put(contrive(in2.getJSON()));
-    args.put(contrive(in3.getJSON()));
-    args.put(contrive(in4.getJSON()));
-    return new CryptolValue(call(f, args));
-  }
- 
-/*
-  public JSONObject callFunction(String f, JSONArray arguments) throws CaaSException {
-    JSONObject message = new JSONObject();
-    JSONObject params = new JSONObject();
-    message.put("params", params);
-    message.put("method", "call");
-    params.put("function", f);
-    params.put("arguments", arguments);
-    send(message);
-    return receive();
-  }
- */
-  
-/*
-  public JSONObject callFunction(String f, JSONArray arguments) throws CaaSException {
-    JSONObject message = new JSONObject();
-    JSONObject params = new JSONObject();
-    message.put("params", params);
-    message.put("method", "evaluate expression");
-    params.put("expression", expression);
     
-    send(message);
-    
-    JSONObject result = receive();
-    
-    return result;
-  }
-*/
-  private JSONObject contrive(JSONObject jsonObject) {
-    if (jsonObject.has("answer") && jsonObject.getJSONObject("answer").has("value")) {
-      return jsonObject.getJSONObject("answer").getJSONObject("value");
-    }
-    return jsonObject;
-  }
-  
 }

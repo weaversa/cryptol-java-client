@@ -13,4 +13,5 @@ default:
 	# find . -name '*.class' -execdir rm -- {} +
 	javac org/json/*.java
 	# javac -Xlint:unchecked na/na/na/*.java
-	javac na/na/na/*.java
+	javac na/na/na/cryptol/*.java
+	javac na/na/na/cryptol/caas/*.java
