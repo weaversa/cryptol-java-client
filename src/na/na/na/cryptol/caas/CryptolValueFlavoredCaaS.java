@@ -13,6 +13,7 @@ public class CryptolValueFlavoredCaaS {
   private static int CALL_ATTEMPTS = 3;
   private static long ATTEMPT_DELAY = 2000;
   
+/*
   public static CryptolValueFlavoredCaaS SUITE_B;
   static {
     try {
@@ -21,6 +22,7 @@ public class CryptolValueFlavoredCaaS {
       throw new ExceptionInInitializerError(e);
     }
   }
+*/
   
   public CryptolValueFlavoredCaaS(String hostOrIP, int port, String module) throws CaaSException {
     this.hostOrIP = hostOrIP;

@@ -7,10 +7,9 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.Stack;
 import java.util.Vector;
-//import na.na.na.cryptol.CryptolType;
-//import na.na.na.cryptol.CryptolValue;
 import org.json.*;
 
 public class JSONFlavoredCaaS {
@@ -25,6 +24,7 @@ public class JSONFlavoredCaaS {
   private int id;
   private boolean connected;
   private String latestModule;
+  private Random random = new Random();
   
   public JSONFlavoredCaaS(String hostOrIP, int port) throws CaaSException {
     try {
@@ -54,10 +54,8 @@ public class JSONFlavoredCaaS {
       throw new CaaSException ("Troublesome connection to CaaS.", e);
     }
     connected = true;
-    while (!states.empty()) {
-      states.pop();
-    }
-    id     = 0;
+    id        = random.nextInt();
+    resetState();
     loadModule("Cryptol");
   }
   
@@ -69,10 +67,9 @@ public class JSONFlavoredCaaS {
     socket = null;
   }
   
-  public void resetState() {
-    while(states.size() > 2) {
-      states.pop();
-    }
+  private void resetState() {
+    states.clear();
+    states.push(null);
   }
   
   private void send(JSONObject message) throws CaaSException {
@@ -86,16 +83,10 @@ public class JSONFlavoredCaaS {
     } else {
       params.put("state", states.peek());
     }
-    
     message.put("id", id);
-    
     String netstring = message.toString();
-    int netstring_size = netstring.length();
-    
-    netstring = Integer.toString(netstring_size) + ":" + netstring + ",";
-    
-    System.out.println("Sending: " + message.toString());
-    
+    netstring = Integer.toString(netstring.length()) + ":" + netstring + ",";
+    // System.out.println("Sending: " + message.toString());
     try {
       out.print(netstring);
     } catch (Exception e) {
@@ -103,12 +94,12 @@ public class JSONFlavoredCaaS {
     }
   }
   
-  private JSONObject receive() {
+  private JSONObject receive() throws CaaSException {
     String result = "";
-    try{
+    try {
       int c, i;
       String length = "";
-      while((c=in.read())!=':' && c != -1){
+      while ((c=in.read())!=':' && c != -1) {
         length = length + ((char) c);
       }
       if(c == -1) return new JSONObject("");
@@ -122,35 +113,27 @@ public class JSONFlavoredCaaS {
         //Something went wrong
         return new JSONObject("");
       }
-      
     } catch (Exception e) {
-      e.printStackTrace();
-      return new JSONObject("");
+      throw new CaaSException("Trouble receiving from CaaS.", e);
     }
-    
     JSONObject resultJSON = new JSONObject(result);
-    System.out.println("resultJSON: " + resultJSON.toString());
+    // System.out.println("resultJSON: " + resultJSON.toString());
 
-    //Need to check and change id
+    // Need to check and change id
     if (id != resultJSON.getInt("id")) {
       //We got the wrong response back
       //This is bad.
-      return null;
+      throw new CaaSException("Incorrect id in response from CaaS.");
     }
-    
-    id++;
-    
+    id = random.nextInt();
 
-    
-    
     //Pull out new state and maybe save
     JSONObject r = resultJSON.getJSONObject("result");
     String newState = r.getString("state");
     if (states.empty() || states.peek() != newState) {
       states.push(newState);
     }
-    
-    System.out.println("Result: " + r.toString());
+    // System.out.println("Result: " + r.toString());
     
     return r;
   }
@@ -161,12 +144,8 @@ public class JSONFlavoredCaaS {
     message.put("params", params);
     message.put("method", "evaluate expression");
     params.put("expression", expression);
-    
     send(message);
-    
-    JSONObject result = receive();
-    
-    return result;
+    return receive();
   }
   
   public JSONObject evaluateExpression(String command) throws CaaSException {
@@ -175,29 +154,23 @@ public class JSONFlavoredCaaS {
     message.put("params", params);
     message.put("method", "evaluate expression");
     params.put("expression", command);
-    
     send(message);
-    
-    JSONObject result = receive();
-    
-    return result;
+    return receive();
   }
   
-  public JSONObject getAnswer(JSONObject result) {
+  public JSONObject getAnswer(JSONObject result) throws CaaSException {
     JSONObject answer, value;
     
     try {
       answer = result.getJSONObject("answer");
     } catch (JSONException e) {
-      System.out.println("Problem with 'answer' tag: " + e.toString());
-      return null;
+      throw new CaaSException("Problem with `answer' tag", e);
     }
     
     try {
       value = answer.getJSONObject("value");
     } catch (JSONException e) {
-      System.out.println("Problem with 'value' tag: " + e.toString());
-      return null;
+      throw new CaaSException("Problem with `value' tag", e);
     }
     
     return value;
@@ -216,18 +189,12 @@ public class JSONFlavoredCaaS {
   public JSONObject loadModuleJSON(String moduleName) throws CaaSException {
     JSONObject message = new JSONObject();
     message.put("method", "load module");
-    
     JSONObject module = new JSONObject();
     module.put("module name", moduleName);
-    
     message.put("params", module);
-    
     send(message);
-    
     JSONObject result = receive();
-
     latestModule = moduleName;
-    
     return result;
   }
   
@@ -246,9 +213,7 @@ public class JSONFlavoredCaaS {
     if (null == arguments) {
       arguments = new JSONArray();
     }
-    
     arguments.put(argument);
-    
     return arguments;
   }
   
@@ -256,9 +221,8 @@ public class JSONFlavoredCaaS {
     return addArgument(arguments, fromHex(argument, numBits));
   }
   
-  public JSONObject addToTuple(JSONObject tuple, JSONObject value) {
+  public JSONObject addToTuple(JSONObject tuple, JSONObject value) throws CaaSException {
     JSONArray data;
-    
     if (null == tuple) {
       tuple = new JSONObject();
       tuple.put("expression", "tuple");
@@ -268,17 +232,14 @@ public class JSONFlavoredCaaS {
       try {
         data = tuple.getJSONArray("data");
       } catch (JSONException e) {
-        System.out.println("Problem with 'data' tag: " + e.toString());
-        return tuple;
+        throw new CaaSException("Problem with `data' tag", e);
       }
     }
-    
     data.put(value);
-    
     return tuple;
   }
   
-  public JSONObject addToTuple(JSONObject tuple, String value, int numBits) {
+  public JSONObject addToTuple(JSONObject tuple, String value, int numBits) throws CaaSException {
     return addToTuple(tuple, fromHex(value, numBits));
   }
   
@@ -289,10 +250,9 @@ public class JSONFlavoredCaaS {
     jhex.put("encoding", "hex");
     jhex.put("data", hex);
     jhex.put("width", numBits);
-    
     return jhex;
   }
-
+  
   public static JSONObject fromHex(String hex) {
     return fromHex(hex, 4 * hex.length());
   }
@@ -300,15 +260,11 @@ public class JSONFlavoredCaaS {
   public static JSONObject fromHexArray(String hex[], int numBits) {
     JSONObject jseq = new JSONObject();
     jseq.put("expression", "sequence");
-    
     JSONArray data = new JSONArray();
-    
     for (int i = 0; i < hex.length; i++) {
       data.put(fromHex(hex[i], numBits));
     }
-    
     jseq.put("data", data);
-    
     return jseq;
   }
   
@@ -376,7 +332,7 @@ public class JSONFlavoredCaaS {
       System.out.println("Problem with 'expression' tag: " + e.toString());
       return null;
     }
-    if(!expression.equals("sequence")) {
+    if (!expression.equals("sequence")) {
       System.out.println("'expression' tag not \"sequence\"");
     }
     
@@ -389,18 +345,13 @@ public class JSONFlavoredCaaS {
     }
     
     String[] ret = new String[data.length()];
-    
     for (int i = 0; i < data.length(); i++) {
       ret[i] = getHex(data.getJSONObject(i));
     }
-    
     return ret;
   }
   
   public String callHexFunction(String functionName, List<String> hexArguments) throws CaaSException {
-    if (null == functionName || "" == functionName) {
-      throw new CaaSException("null or empty functionName in callFunction.");
-    }
     if (null == functionName || "" == functionName) {
       throw new CaaSException("null or empty functionName in callFunction.");
     }
@@ -418,12 +369,12 @@ public class JSONFlavoredCaaS {
     message.put("params", params);
     send(message);
     JSONObject result = receive();
-    System.out.println(result.toString());
+    // System.out.println(result.toString());
     return getHex(getAnswer(result));
   }
   
   public String callUnaryHexFunction(String functionName, String hexArgument0) throws CaaSException {
     return callHexFunction(functionName, new Vector<String>(Arrays.asList(hexArgument0)));
   }
-    
+  
 }
