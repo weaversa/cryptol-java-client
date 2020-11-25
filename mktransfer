@@ -1,0 +1,5 @@
+#!/bin/bash
+
+rm -f transfer.tar
+
+find src test -type f \( -name '*.java' -or -name 'Makefile' \) | xargs tar cvf transfer.tar
