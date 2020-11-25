@@ -1,8 +1,7 @@
 package na.na.na.cryptol.caas;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Arrays;
@@ -10,16 +9,17 @@ import java.util.List;
 import java.util.Random;
 import java.util.Stack;
 import java.util.Vector;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class PrimitiveCaaS {
   private String hostOrIP;
   private InetAddress inetAddress;
   private int port;
   private Socket socket;
-  private PrintStream out;
-  private BufferedReader in;
-  private InputStreamReader in_;
+  private BufferedInputStream in;
+  private BufferedOutputStream out;
   private Stack<String> states = new Stack<String>(); // states in never null
   private int id;
   private boolean connected;
@@ -46,9 +46,8 @@ public class PrimitiveCaaS {
   private void reconnect() throws CaaSException {
     try {
       socket    = new Socket(inetAddress, port);
-      out       = new PrintStream(socket.getOutputStream());
-      in_       = new InputStreamReader(socket.getInputStream());
-      in        = new BufferedReader(in_);
+      in        = new BufferedInputStream(socket.getInputStream());
+      out       = new BufferedOutputStream(socket.getOutputStream());
     }
     catch (Exception e) {
       throw new CaaSException ("Troublesome connection to CaaS.", e);
@@ -62,7 +61,6 @@ public class PrimitiveCaaS {
   private void disconnect() {
     connected = false;
     in     = null;
-    in_    = null;
     out    = null;
     socket = null;
   }
@@ -73,22 +71,26 @@ public class PrimitiveCaaS {
   }
   
   private void send(JSONObject message) throws CaaSException {
-    message.putOnce("jsonrpc", "2.0");
-    if (!message.has("params")) {
-      message.putOnce("params", new JSONObject());
-    }
-    JSONObject params = message.getJSONObject("params");
-    if (states.empty() || null == states.peek()) {
-      params.put("state", JSONObject.NULL);
-    } else {
-      params.put("state", states.peek());
-    }
-    message.put("id", id);
-    String netstring = message.toString();
-    netstring = Integer.toString(netstring.length()) + ":" + netstring + ",";
-    // System.out.println("Sending: " + message.toString());
     try {
-      out.print(netstring);
+      message.putOnce("jsonrpc", "2.0");
+      if (!message.has("params")) {
+        message.putOnce("params", new JSONObject());
+      }
+      JSONObject params = message.getJSONObject("params");
+      if (states.empty() || null == states.peek()) {
+        params.put("state", JSONObject.NULL);
+      } else {
+        params.put("state", states.peek());
+      }
+      message.put("id", id);
+      byte[] octets = message.toString().getBytes("UTF-8");
+      byte[] length = Integer.toString(octets.length).getBytes("UTF-8");
+      // System.out.println("Sending: " + message.toString());
+      out.write(length, 0, length.length);
+      out.write(':');
+      out.write(octets, 0, octets.length);
+      out.write(',');
+      out.flush();
     } catch (Exception e) {
       throw new CaaSException("Trouble sending to CaaS.", e);
     }
@@ -110,20 +112,19 @@ public class PrimitiveCaaS {
         length_.append((char) c);
       }
       int length = Integer.parseInt(length_.toString());
-      StringBuilder octets = new StringBuilder(length);
-      for (int i = 0; i < length; i++) {
+      byte[] octets = new byte[length];
+      for (int i = 0; i < octets.length; i++) {
         c = in.read(); // TODO: needs to by octet based rather than char based.
         if (-1 == c) {
           throw new CaaSException("Ill-formed netstring.");
         }
-        octets.append((char) c);
+        octets[i] = (byte) c;
       }
       c = in.read();
       if (',' != c) {
         throw new CaaSException("Ill-formed netstring.");
       }
-      // do utf8?
-      jsonObject = new JSONObject(octets.toString());
+      jsonObject = new JSONObject(new String(octets, "UTF-8"));
       if (id != jsonObject.getInt("id")) {
         throw new CaaSException("Incorrect id in response from CaaS.");
       }
