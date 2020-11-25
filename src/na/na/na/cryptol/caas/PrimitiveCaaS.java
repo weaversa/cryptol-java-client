@@ -1,5 +1,6 @@
 package na.na.na.cryptol.caas;
 
+import com.pobox.djb.Netstring;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.net.InetAddress;
@@ -83,13 +84,8 @@ public class PrimitiveCaaS {
         params.put("state", states.peek());
       }
       message.put("id", id);
-      byte[] octets = message.toString().getBytes("UTF-8");
-      byte[] length = Integer.toString(octets.length).getBytes("UTF-8");
-      // System.out.println("Sending: " + message.toString());
-      out.write(length, 0, length.length);
-      out.write(':');
-      out.write(octets, 0, octets.length);
-      out.write(',');
+      byte[] netstring = Netstring.toByteArray(message.toString(), "UTF-8");
+      out.write(netstring, 0, netstring.length);
       out.flush();
     } catch (Exception e) {
       throw new CaaSException("Trouble sending to CaaS.", e);
@@ -99,32 +95,7 @@ public class PrimitiveCaaS {
   private JSONObject receive() throws CaaSException {
     JSONObject jsonObject = null;
     try {
-      int c;
-      StringBuilder length_ = new StringBuilder();
-      while (true) {
-        c = in.read();
-        if (-1 == c) {
-          throw new CaaSException("Ill-formed netstring.");
-        }
-        if (':' == c) {
-          break;
-        }
-        length_.append((char) c);
-      }
-      int length = Integer.parseInt(length_.toString());
-      byte[] octets = new byte[length];
-      for (int i = 0; i < octets.length; i++) {
-        c = in.read(); // TODO: needs to by octet based rather than char based.
-        if (-1 == c) {
-          throw new CaaSException("Ill-formed netstring.");
-        }
-        octets[i] = (byte) c;
-      }
-      c = in.read();
-      if (',' != c) {
-        throw new CaaSException("Ill-formed netstring.");
-      }
-      jsonObject = new JSONObject(new String(octets, "UTF-8"));
+      jsonObject = new JSONObject(Netstring.parse(in, "UTF-8"));
       if (id != jsonObject.getInt("id")) {
         throw new CaaSException("Incorrect id in response from CaaS.");
       }

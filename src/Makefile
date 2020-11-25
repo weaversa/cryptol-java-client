@@ -11,7 +11,8 @@ CLASSPATH = -cp org/Caas/:lib/json-java.jar
 
 default:
 	# find . -name '*.class' -execdir rm -- {} +
-	javac org/json/*.java
-	# javac -Xlint:unchecked na/na/na/*.java
-	javac na/na/na/cryptol/*.java
-	javac na/na/na/cryptol/caas/*.java
+	find . -type f -name '*.java' | xargs javac
+	#javac org/json/*.java
+	#javac -Xlint:unchecked na/na/na/*.java
+	#javac na/na/na/cryptol/*.java
+	#javac na/na/na/cryptol/caas/*.java

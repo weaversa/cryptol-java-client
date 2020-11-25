@@ -16,6 +16,10 @@ public class PrimitiveCaaSTest {
     System.out.println(caas.evaluateExpression("False").toString());
     System.out.println("");
 
+    System.out.println("Evaluating `β where β = 7'...");
+    System.out.println(caas.evaluateExpression("β where β = 7").toString());
+    System.out.println("");
+
     System.out.println("");
     System.out.println("Evaluating `lg2 2'...");
     arguments = new JSONArray();
