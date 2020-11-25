@@ -41,11 +41,12 @@ import org.json.JSONObject;
  */
 
 public class CryptolValue {
+  
   private JSONObject json;
   private CryptolType type;
   private boolean bit;
   private BigInteger modulus; // n for Z n or 2^n for [n] or 0 for Integer or null for other types
-  private int size = -1; // so we're disallowing [n] where n > Integer.MAX_VALUE == 2^^31 - 1
+  private int size; // so we're disallowing [n] where n > Integer.MAX_VALUE == 2^^31 - 1
   private BigInteger bitseq;
   
   public CryptolValue(JSONObject jsonObject) {
@@ -97,9 +98,6 @@ public class CryptolValue {
     }
     return json;
   }
-
-
-  
   
   private static int computeSize(String digits, int radix) {
     switch (radix) {
@@ -110,7 +108,7 @@ public class CryptolValue {
       case 8:
         return 3 * digits.length();
       default:
-        throw new IllegalArgumentException();
+        throw new IllegalArgumentException("Radix must be 2, 8 or 16, rather than " + radix + '.');
     }
   }
   
@@ -147,7 +145,7 @@ public class CryptolValue {
     }
   }
   
-  public String getHexString() {
+  public String toHexString() {
     if (null == type) {
       fromJSON();
     }
@@ -168,11 +166,11 @@ public class CryptolValue {
       case RESIDUE:
         return bitseq.toString(16);
       default:
-        throw new UnsupportedOperationException("getHexString only operates on Cryptol types [n], Integer or Z n.");
+        throw new UnsupportedOperationException("toHexString only operates on Cryptol types [n], Integer or Z n.");
     }
   }
   
-  public String getBinString() {
+  public String toBinString() {
     if (null == type) {
       fromJSON();
     }
@@ -189,11 +187,11 @@ public class CryptolValue {
       case RESIDUE:
         return bitseq.toString(2);
       default:
-        throw new UnsupportedOperationException("getBinString only operates on Cryptol types [n], Integer or Z n.");
+        throw new UnsupportedOperationException("toBinString only operates on Cryptol types [n], Integer or Z n.");
     }
   }
   
-  public String getDecString() {
+  public String toDecString() {
     if (null == type) {
       fromJSON();
     }
@@ -207,7 +205,7 @@ public class CryptolValue {
       case RESIDUE:
         return bitseq.toString(10);
       default:
-        throw new UnsupportedOperationException("getBinString only operates on Cryptol types [n], Integer or Z n.");
+        throw new UnsupportedOperationException("toDecString only operates on Cryptol types [n], Integer or Z n.");
     }
   }
   
@@ -247,7 +245,7 @@ public class CryptolValue {
       size = jsonObject.getInt("width");
       calculateModulus();
     } catch (JSONException e) {
-      throw new UnsupportedOperationException("Could not access expression, encoding or data in JSON of Cryptol result.\nJSON: " + json.toString(), e);
+      throw new UnsupportedOperationException("Could not access expression, encoding, data or width in JSON of Cryptol result.\nJSON: " + json.toString(), e);
     }
     if (("bits".equals(expression)) && ("hex".equals(encoding))) {
       bitseq = new BigInteger(data, 16);
@@ -263,7 +261,7 @@ public class CryptolValue {
     if (CryptolType.BIT == type) {
       return bit;
     } else {
-      throw new UnsupportedOperationException("Requested bit from a nonbit bitseq");
+      throw new UnsupportedOperationException("Requested bit from a nonbit Cryotol value");
     }
   }
   
@@ -280,7 +278,7 @@ public class CryptolValue {
         json.put("width", size);
         break;
       default:
-        throw new UnsupportedOperationException("Conversion to JSON unimplemented.");
+        throw new UnsupportedOperationException("Conversion to JSON unimplemented for type `" + type + "'.");
     }
   }
   

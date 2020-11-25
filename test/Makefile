@@ -9,9 +9,7 @@ default:
 	# killall -v cryptol-remote-api || true
 	# ~/unix-roots/cryptol-2.9.1.99-2020-10-20/bin/cryptol-remote-api --port 65521 --public &
 	rm -f CaaSTest.class
-	javac -cp ../src:. JSONFlavoredCaaSTest.java
-	javac -cp ../src:. CryptolValueFlavoredCaaSTest.java
-	javac -cp ../src:. StringFlavoredCaaSTest.java
-	java -cp ../src:. StringFlavoredCaaSTest
-	java -cp ../src:. CryptolValueFlavoredCaaSTest
-	java -cp ../src:. JSONFlavoredCaaSTest localhost 65521
+	javac -cp ../src:. ModuleSpecificCaaSTest.java
+	java -cp ../src:. ModuleSpecificCaaSTest
+	javac -cp ../src:. PrimitiveCaaSTest.java
+	java -cp ../src:. PrimitiveCaaSTest localhost 65521

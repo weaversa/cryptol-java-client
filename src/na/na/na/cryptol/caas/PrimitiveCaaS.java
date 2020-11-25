@@ -12,7 +12,7 @@ import java.util.Stack;
 import java.util.Vector;
 import org.json.*;
 
-public class JSONFlavoredCaaS {
+public class PrimitiveCaaS {
   private String hostOrIP;
   private InetAddress inetAddress;
   private int port;
@@ -26,7 +26,7 @@ public class JSONFlavoredCaaS {
   private String latestModule;
   private Random random = new Random();
   
-  public JSONFlavoredCaaS(String hostOrIP, int port) throws CaaSException {
+  public PrimitiveCaaS(String hostOrIP, int port) throws CaaSException {
     try {
       this.hostOrIP = hostOrIP;
       this.inetAddress = InetAddress.getByName(hostOrIP);
@@ -37,7 +37,7 @@ public class JSONFlavoredCaaS {
     reconnect();
   }
   
-  public JSONFlavoredCaaS(InetAddress inetAddress, int port) throws CaaSException {
+  public PrimitiveCaaS(InetAddress inetAddress, int port) throws CaaSException {
     this.inetAddress = inetAddress;
     this.port = port;
     reconnect();
@@ -95,47 +95,50 @@ public class JSONFlavoredCaaS {
   }
   
   private JSONObject receive() throws CaaSException {
-    String result = "";
+    JSONObject jsonObject = null;
     try {
-      int c, i;
-      String length = "";
-      while ((c=in.read())!=':' && c != -1) {
-        length = length + ((char) c);
-      }
-      if(c == -1) return new JSONObject("");
-      for(i = 0; i < Integer.parseInt(length); i++) {
+      int c;
+      StringBuilder length_ = new StringBuilder();
+      while (true) {
         c = in.read();
-        result = result + ((char) c);
+        if (-1 == c) {
+          throw new CaaSException("Ill-formed netstring.");
+        }
+        if (':' == c) {
+          break;
+        }
+        length_.append((char) c);
       }
-      if(c == -1) return new JSONObject("");
+      int length = Integer.parseInt(length_.toString());
+      StringBuilder octets = new StringBuilder(length);
+      for (int i = 0; i < length; i++) {
+        c = in.read(); // TODO: needs to by octet based rather than char based.
+        if (-1 == c) {
+          throw new CaaSException("Ill-formed netstring.");
+        }
+        octets.append((char) c);
+      }
       c = in.read();
-      if(c != ',') {
-        //Something went wrong
-        return new JSONObject("");
+      if (',' != c) {
+        throw new CaaSException("Ill-formed netstring.");
       }
+      // do utf8?
+      jsonObject = new JSONObject(octets.toString());
+      if (id != jsonObject.getInt("id")) {
+        throw new CaaSException("Incorrect id in response from CaaS.");
+      }
+      id = random.nextInt();
+      JSONObject result = jsonObject.getJSONObject("result");
+      String newState = result.getString("state");
+      if (states.empty() || states.peek() != newState) {
+        states.push(newState);
+      }
+      return result;
+    } catch (CaaSException e) {
+      throw e;
     } catch (Exception e) {
-      throw new CaaSException("Trouble receiving from CaaS.", e);
+      throw new CaaSException("Trouble receiving from CaaS." + ((null == jsonObject) ? "" : ("JSON: " +  jsonObject.toString())), e);
     }
-    JSONObject resultJSON = new JSONObject(result);
-    // System.out.println("resultJSON: " + resultJSON.toString());
-
-    // Need to check and change id
-    if (id != resultJSON.getInt("id")) {
-      //We got the wrong response back
-      //This is bad.
-      throw new CaaSException("Incorrect id in response from CaaS.");
-    }
-    id = random.nextInt();
-
-    //Pull out new state and maybe save
-    JSONObject r = resultJSON.getJSONObject("result");
-    String newState = r.getString("state");
-    if (states.empty() || states.peek() != newState) {
-      states.push(newState);
-    }
-    // System.out.println("Result: " + r.toString());
-    
-    return r;
   }
   
   public JSONObject evaluateExpression(JSONObject expression) throws CaaSException {
@@ -349,32 +352,6 @@ public class JSONFlavoredCaaS {
       ret[i] = getHex(data.getJSONObject(i));
     }
     return ret;
-  }
-  
-  public String callHexFunction(String functionName, List<String> hexArguments) throws CaaSException {
-    if (null == functionName || "" == functionName) {
-      throw new CaaSException("null or empty functionName in callFunction.");
-    }
-    //TODO make sure proper identifier
-    // if () {
-    //  throw new CaaSException("null or empty functionName in callFunction.");
-    // }
-    JSONArray jsonArguments = new JSONArray();
-    for (String hex: hexArguments) {
-      jsonArguments.put(fromHex(hex));
-    }
-    JSONObject message = call(functionName, jsonArguments);
-    JSONObject params = new JSONObject();
-    params.put("state", states.peek());
-    message.put("params", params);
-    send(message);
-    JSONObject result = receive();
-    // System.out.println(result.toString());
-    return getHex(getAnswer(result));
-  }
-  
-  public String callUnaryHexFunction(String functionName, String hexArgument0) throws CaaSException {
-    return callHexFunction(functionName, new Vector<String>(Arrays.asList(hexArgument0)));
   }
   
 }

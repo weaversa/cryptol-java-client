@@ -1,27 +1,32 @@
 import org.json.*;
 import na.na.na.cryptol.CryptolValue;
+import na.na.na.cryptol.WordAsBinaryString;
 import na.na.na.cryptol.caas.CaaSException;
-import na.na.na.cryptol.caas.CryptolValueFlavoredCaaS;
+import na.na.na.cryptol.caas.ModuleSpecificCaaS;
 
-public class CryptolValueFlavoredCaaSTest {
+public class ModuleSpecificCaaSTest {
   
   public static void main(String[] args) throws CaaSException {
     
-    CryptolValueFlavoredCaaS suiteB = new CryptolValueFlavoredCaaS("localhost", 65521, "SuiteB");
-    System.out.println("Evaluating `sha224 '...");
+    ModuleSpecificCaaS suiteB = new ModuleSpecificCaaS("localhost", 65521, "SuiteB");
+    System.out.println("Evaluating `sha224' ...");
     CryptolValue in0 = new CryptolValue(352, "54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f672e", 16);
-    CryptolValue out = suiteB.callFunction("sha224", in0);
+    CryptolValue out = suiteB.call("sha224", in0);
     System.out.println(out + "\n");
     
     CryptolValue k = new CryptolValue(128, "000102030405060708090a0b0c0d0e0f", 16);
-    CryptolValue ks = suiteB.callFunction("aes128EncryptSchedule", k);
+    CryptolValue ks = suiteB.call("aes128EncryptSchedule", k);
     System.out.println("\nks:\n" + ks + "\n");
     CryptolValue pt = new CryptolValue(128, "00112233445566778899aabbccddeeff", 16);
-    CryptolValue ct = suiteB.callFunction("aesEncryptBlock", ks, pt);
+    CryptolValue ct = suiteB.call("aesEncryptBlock", ks, pt);
     System.out.println("");
     System.out.println("ct: " + ct);
     System.out.println("    " + "0x69c4e0d86a7b0430d8cdb78070b4c55a");
     System.out.println("");
+    
+    /*
+    CryptolValue foo = suiteB.call(ModuleSpecificCaaSTest.class.getSimpleName());
+     */
   }
 }
     /*
