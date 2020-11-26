@@ -71,47 +71,90 @@ public class PrimitiveCaaS {
     states.push(null);
   }
   
-  private void send(JSONObject message) throws CaaSException {
+  // do we want non-blocking IO?
+
+  private JSONObject transceive(JSONObject cryptolInput) throws CaaSException {
     try {
-      message.putOnce("jsonrpc", "2.0");
-      if (!message.has("params")) {
-        message.putOnce("params", new JSONObject());
+      cryptolInput.putOnce("jsonrpc", "2.0");
+      if (!cryptolInput.has("params")) {
+        cryptolInput.putOnce("params", new JSONObject());
       }
-      JSONObject params = message.getJSONObject("params");
+      JSONObject params = cryptolInput.getJSONObject("params");
       if (states.empty() || null == states.peek()) {
         params.put("state", JSONObject.NULL);
       } else {
         params.put("state", states.peek());
       }
-      message.put("id", id);
-      byte[] netstring = Netstring.toByteArray(message.toString(), "UTF-8");
+      id = random.nextInt();
+      cryptolInput.put("id", id);
+      byte[] netstring = Netstring.render(cryptolInput.toString(), "UTF-8");
+      System.out.println(">>>>> " + cryptolInput.toString());
       out.write(netstring, 0, netstring.length);
       out.flush();
     } catch (Exception e) {
       throw new CaaSException("Trouble sending to CaaS.", e);
     }
-  }
-  
-  private JSONObject receive() throws CaaSException {
-    JSONObject jsonObject = null;
+    JSONObject cryptolOutput = null;
     try {
-      jsonObject = new JSONObject(Netstring.parse(in, "UTF-8"));
-      if (id != jsonObject.getInt("id")) {
+      cryptolOutput = new JSONObject(Netstring.parse(in, "UTF-8"));
+      System.out.println("<<<<< " + cryptolOutput.toString());
+      if (cryptolOutput.getInt("id") != id) {
         throw new CaaSException("Incorrect id in response from CaaS.");
       }
-      id = random.nextInt();
-      JSONObject result = jsonObject.getJSONObject("result");
+      JSONObject result = cryptolOutput.getJSONObject("result");
       String newState = result.getString("state");
       if (states.empty() || states.peek() != newState) {
         states.push(newState);
       }
-      return result;
+      return cryptolOutput;
     } catch (CaaSException e) {
       throw e;
     } catch (Exception e) {
-      throw new CaaSException("Trouble receiving from CaaS." + ((null == jsonObject) ? "" : ("JSON: " +  jsonObject.toString())), e);
+      throw new CaaSException("Trouble receiving from CaaS." + ((null == cryptolOutput) ? "" : ("JSON: " +  cryptolOutput.toString())), e);
     }
   }
+  
+//  private void send(JSONObject message) throws CaaSException {
+//    try {
+//      message.putOnce("jsonrpc", "2.0");
+//      if (!message.has("params")) {
+//        message.putOnce("params", new JSONObject());
+//      }
+//      JSONObject params = message.getJSONObject("params");
+//      if (states.empty() || null == states.peek()) {
+//        params.put("state", JSONObject.NULL);
+//      } else {
+//        params.put("state", states.peek());
+//      }
+//      id = random.nextInt();
+//      message.put("id", id);
+//      byte[] netstring = Netstring.render(message.toString(), "UTF-8");
+//      out.write(netstring, 0, netstring.length);
+//      out.flush();
+//    } catch (Exception e) {
+//      throw new CaaSException("Trouble sending to CaaS.", e);
+//    }
+//  }
+//
+//  private JSONObject receive() throws CaaSException {
+//    JSONObject jsonObject = null;
+//    try {
+//      jsonObject = new JSONObject(Netstring.parse(in, "UTF-8"));
+//      if (id != jsonObject.getInt("id")) {
+//        throw new CaaSException("Incorrect id in response from CaaS.");
+//      }
+//      JSONObject result = jsonObject.getJSONObject("result");
+//      String newState = result.getString("state");
+//      if (states.empty() || states.peek() != newState) {
+//        states.push(newState);
+//      }
+//      return result;
+//    } catch (CaaSException e) {
+//      throw e;
+//    } catch (Exception e) {
+//      throw new CaaSException("Trouble receiving from CaaS." + ((null == jsonObject) ? "" : ("JSON: " +  jsonObject.toString())), e);
+//    }
+//  }
   
   public JSONObject evaluateExpression(JSONObject expression) throws CaaSException {
     JSONObject message = new JSONObject();
@@ -119,8 +162,9 @@ public class PrimitiveCaaS {
     message.put("params", params);
     message.put("method", "evaluate expression");
     params.put("expression", expression);
-    send(message);
-    return receive();
+    //    send(message);
+    //    return receive();
+    return transceive(message);
   }
   
   public JSONObject evaluateExpression(String command) throws CaaSException {
@@ -129,25 +173,28 @@ public class PrimitiveCaaS {
     message.put("params", params);
     message.put("method", "evaluate expression");
     params.put("expression", command);
-    send(message);
-    return receive();
+    //    send(message);
+    //    return receive();
+    return transceive(message);
   }
   
-  public JSONObject getAnswer(JSONObject result) throws CaaSException {
-    JSONObject answer, value;
-    
+  public JSONObject getAnswer(JSONObject cryptolOut) throws CaaSException {
+    JSONObject result, answer, value;
+    try {
+      result = cryptolOut.getJSONObject("result");
+    } catch (JSONException e) {
+      throw new CaaSException("Problem with `result' tag", e);
+    }
     try {
       answer = result.getJSONObject("answer");
     } catch (JSONException e) {
       throw new CaaSException("Problem with `answer' tag", e);
     }
-    
     try {
       value = answer.getJSONObject("value");
     } catch (JSONException e) {
       throw new CaaSException("Problem with `value' tag", e);
     }
-    
     return value;
   }
   
@@ -167,10 +214,9 @@ public class PrimitiveCaaS {
     JSONObject module = new JSONObject();
     module.put("module name", moduleName);
     message.put("params", module);
-    send(message);
-    JSONObject result = receive();
+    JSONObject cryptolOut = transceive(message);
     latestModule = moduleName;
-    return result;
+    return cryptolOut;
   }
   
   public JSONObject call(String functionName, JSONArray arguments) throws CaaSException {
@@ -180,8 +226,7 @@ public class PrimitiveCaaS {
     JSONObject message = new JSONObject();
     message.put("method", "call");
     message.put("params", params);
-    send(message);
-    return receive();
+    return transceive(message);
   }
   
   public JSONArray addArgument(JSONArray arguments, JSONObject argument) {

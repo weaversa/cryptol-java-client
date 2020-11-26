@@ -2,10 +2,11 @@ package com.pobox.djb;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 public class Netstring {
   
-  public static byte[] toByteArray(CharSequence s, String charset) {
+  public static byte[] render(CharSequence s, Charset charset) {
     try {
       byte[] dataOctets = s.toString().getBytes(charset);
       int dataLength = dataOctets.length;
@@ -26,11 +27,23 @@ public class Netstring {
     }
   }
   
-  public static byte[] toByteArray(CharSequence s) {
-    return toByteArray(s, "UTF-8");
+  public static byte[] render(CharSequence s, String charsetName) {
+    try {
+      return render(s, Charset.forName(charsetName));
+    } catch (Exception e) {
+      throw new NetstringException(e);
+    }
+  }
+
+  public static byte[] render(CharSequence s) {
+    try {
+      return render(s, Charset.defaultCharset());
+    } catch (Exception e) {
+      throw new NetstringException(e);
+    }
   }
   
-  public static String parse(InputStream in, String charset) {
+  public static String parse(InputStream in, Charset charset) {
     String s = null;
     try {
       int c;
@@ -62,7 +75,7 @@ public class Netstring {
         throw new NetstringException("Netstring length has no digits.");
       }
       if (1 < lengthChars.length() && '0' == lengthChars.charAt(0)) {
-        throw new NetstringException("Netstring length has invalid leading zero.");
+        throw new NetstringException("Netstring length has invalid leading zero(es).");
       }
       int length = Integer.parseInt(lengthChars.toString());
       byte[] dataOctets = new byte[length];
@@ -83,8 +96,16 @@ public class Netstring {
     }
     return s;
   }
-  
-  public static String fromByteArray(byte[] netstring, String charset) {
+
+  public static String parse(InputStream in, String charsetName) {
+    return parse(in, Charset.forName(charsetName));
+  }
+
+  public static String parse(InputStream in) {
+    return parse(in, Charset.defaultCharset());
+  }
+
+  public static String parse(byte[] netstring, Charset charset) {
     ByteArrayInputStream in = new ByteArrayInputStream(netstring);
     String s = parse(in, charset);
     if (0 == in.available()) {
@@ -94,4 +115,12 @@ public class Netstring {
     }
   }
   
+  public static String parse(byte[] netstring, String charsetName) {
+    return parse(netstring, Charset.forName(charsetName));
+  }
+
+  public static String parse(byte[] netstring) {
+    return parse(netstring, Charset.defaultCharset());
+  }
+
 }

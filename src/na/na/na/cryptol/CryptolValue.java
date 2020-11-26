@@ -93,10 +93,11 @@ public class CryptolValue {
   }
   
   public JSONObject getJSONForArgument() {
-    if (json.has("answer") && json.getJSONObject("answer").has("value")) {
-      return json.getJSONObject("answer").getJSONObject("value");
+    try {
+      return json.getJSONObject("result").getJSONObject("answer").getJSONObject("value");
+    } catch (JSONException e) {
+      return json;
     }
-    return json;
   }
   
   private static int computeSize(String digits, int radix) {
