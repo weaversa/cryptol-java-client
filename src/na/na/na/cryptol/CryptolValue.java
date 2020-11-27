@@ -46,7 +46,7 @@ public class CryptolValue {
   private CryptolType type;
   private boolean bit;
   private BigInteger modulus; // n for Z n or 2^n for [n] or 0 for Integer or null for other types
-  private int size; // so we're disallowing [n] where n > Integer.MAX_VALUE == 2^^31 - 1
+  private int size; // n for [n] so we're disallowing [n] where n > Integer.MAX_VALUE == 2^^31 - 1
   private BigInteger bitseq;
   
   public CryptolValue(JSONObject jsonObject) {
@@ -227,15 +227,7 @@ public class CryptolValue {
   }
   
   private void fromJSON() {
-    JSONObject jsonObject = null;
-    if (json.has("expression")) {
-      jsonObject = json;
-    } else {
-      if (json.has("answer")) {
-        jsonObject = json.getJSONObject("answer");
-        jsonObject = jsonObject.getJSONObject("value");
-      }
-    }
+    JSONObject jsonObject = getJSONForArgument();
     String expression = null;
     String encoding = null;
     String data = null;
