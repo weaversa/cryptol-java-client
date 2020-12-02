@@ -1,7 +1,7 @@
 package na.na.na.cryptol;
 
 import java.math.BigInteger;
-import org.json.JSONArray;
+import static na.na.na.cryptol.CryptolType.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -16,11 +16,11 @@ import org.json.JSONObject;
  size >= 0
  modulus == 2^size
  modulus > 0 // implied from previous
- 0 <= bitseq < modulus
+ 0 <= bigInt < modulus
  
  for RESIDUE:
  modulus >= 0  // we are modeling Z_n where n is the modulus; Z_0 is Z
- if modulus > 0, 0 <= bitseq < modulus
+ if modulus > 0, 0 <= bigInt < modulus
  
  */
 
@@ -45,53 +45,53 @@ public class CryptolValue {
   private JSONObject json;
   private CryptolType type;
   private boolean bit;
+  private BigInteger bigInt;
   private BigInteger modulus; // n for Z n or 2^n for [n] or 0 for Integer or null for other types
   private int size; // n for [n] so we're disallowing [n] where n > Integer.MAX_VALUE == 2^^31 - 1
-  private BigInteger bitseq;
-  
+
   public CryptolValue(JSONObject jsonObject) {
     json = jsonObject;
   }
-  
+
   public CryptolValue(int bits, String digits, int radix) {
     size = bits;
     calculateModulus();
     type = CryptolType.WORD;
-    bitseq = new BigInteger(digits, radix);
+    bigInt = new BigInteger(digits, radix);
     if (size < 0) {
       throw new IllegalArgumentException();
     }
-    if (0 > bitseq.signum()) {
+    if (0 > bigInt.signum()) {
       throw new IllegalArgumentException();
     }
-    if (bitseq.compareTo(modulus) >= 0) {
+    if (bigInt.compareTo(modulus) >= 0) {
       throw new IllegalArgumentException();
     }
     toJSON();
   }
-  
+
   public CryptolValue(String digits, int radix) {
-    new CryptolValue(computeSize(digits, radix), digits, radix);
+    new CryptolValue(calculateSize(digits, radix), digits, radix);
   }
-  
+
   public CryptolValue(BigInteger big) {
     modulus = BigInteger.ZERO;
     size = -1;
-    type = CryptolType.RESIDUE;
-    bitseq = big;
+    type = RESIDUE;
+    bigInt = big;
     toJSON();
   }
-  
+
   public CryptolValue(boolean bool) {
     bit = bool;
-    type = CryptolType.BIT;
+    type = BIT;
     toJSON();
   }
-  
+
   public JSONObject getJSON() {
     return json;
   }
-  
+
   public JSONObject getJSONForArgument() {
     try {
       return json.getJSONObject("result").getJSONObject("answer").getJSONObject("value");
@@ -99,8 +99,8 @@ public class CryptolValue {
       return json;
     }
   }
-  
-  private static int computeSize(String digits, int radix) {
+
+  private static int calculateSize(String digits, int radix) {
     switch (radix) {
       case 2:
         return digits.length();
@@ -112,32 +112,32 @@ public class CryptolValue {
         throw new IllegalArgumentException("Radix must be 2, 8 or 16, rather than " + radix + '.');
     }
   }
-  
+
   public int getSize() {
     return size;
   }
-  
+
   private void calculateModulus() {
     modulus = BigInteger.ONE.shiftLeft(size);
   }
-  
+
   public BigInteger getModulus() {
     return new BigInteger(modulus.toString());
   }
-  
+
   private void checkValue() {
     switch (type) {
       case RESIDUE:
-      case WORD:
+      case WORD: //TODO: o modulus no check on bigInt
         if (0 > modulus.signum()) {
-          throw new UnsupportedOperationException("Negative modulus");
+          throw new CryptolValueException("Negative modulus");
         }
-        if (bitseq.compareTo(modulus) >= 0) {
-          throw new UnsupportedOperationException("Value exceeds maximum for size or modulus.");
+        if (bigInt.compareTo(modulus) >= 0) {
+          throw new CryptolValueException("Value exceeds maximum for size or modulus.");
         }
         if (modulus.signum() > 0) {
-          if (bitseq.signum() < 0) {
-            throw new UnsupportedOperationException("Negative bitseq.");
+          if (bigInt.signum() < 0) {
+            throw new CryptolValueException("Negative bigInt.");
           }
         }
         break;
@@ -145,71 +145,71 @@ public class CryptolValue {
         break;
     }
   }
-  
+
   public String toHexString() {
     if (null == type) {
       fromJSON();
     }
     switch (type) {
       case WORD:
-        if (null == bitseq) {
+        if (null == bigInt) {
           throw new UnsupportedOperationException("Could not parse result from Cryptol");
         }
         if (0 != size % 4) {
           throw new UnsupportedOperationException("Word length not a multiple of 4 so hex string conversion failed.");
         }
         int hexChars = size >> 2;
-        String hexString = bitseq.toString(16);
+        String hexString = bigInt.toString(16);
         while (hexString.length() < hexChars) {
           hexString = "0" + hexString;
         }
         return hexString;
       case RESIDUE:
-        return bitseq.toString(16);
+        return bigInt.toString(16);
       default:
         throw new UnsupportedOperationException("toHexString only operates on Cryptol types [n], Integer or Z n.");
     }
   }
-  
+
   public String toBinString() {
     if (null == type) {
       fromJSON();
     }
     switch (type) {
       case WORD:
-        if (null == bitseq) {
+        if (null == bigInt) {
           throw new UnsupportedOperationException("Could not parse result from Cryptol");
         }
-        String binString = bitseq.toString(2);
+        String binString = bigInt.toString(2);
         while (binString.length() < size) {
           binString = "0" + binString;
         }
         return binString;
       case RESIDUE:
-        return bitseq.toString(2);
+        return bigInt.toString(2);
       default:
         throw new UnsupportedOperationException("toBinString only operates on Cryptol types [n], Integer or Z n.");
     }
   }
-  
+
   public String toDecString() {
     if (null == type) {
       fromJSON();
     }
     switch (type) {
       case WORD:
-        if (null == bitseq) {
+        if (null == bigInt) {
           throw new UnsupportedOperationException("Could not parse result from Cryptol");
         }
-        String decString = bitseq.toString(10);
+        String decString = bigInt.toString(10);
         return decString;
       case RESIDUE:
-        return bitseq.toString(10);
+        return bigInt.toString(10);
       default:
         throw new UnsupportedOperationException("toDecString only operates on Cryptol types [n], Integer or Z n.");
     }
   }
-  
+
   public BigInteger getBigInteger() {
     if (null == type) {
       fromJSON();
@@ -217,15 +217,15 @@ public class CryptolValue {
     switch (type) {
       case WORD:
       case RESIDUE:
-        if (null == bitseq) {
+        if (null == bigInt) {
           throw new UnsupportedOperationException("Could not parse result from Cryptol");
         }
-        return bitseq;
+        return bigInt;
       default:
         throw new UnsupportedOperationException("getBigInteger only operates on Cryptol types [n], Integer or Z n.");
     }
   }
-  
+
   private void fromJSON() {
     JSONObject jsonObject = getJSONForArgument();
     String expression = null;
@@ -241,7 +241,7 @@ public class CryptolValue {
       throw new UnsupportedOperationException("Could not access expression, encoding, data or width in JSON of Cryptol result.\nJSON: " + json.toString(), e);
     }
     if (("bits".equals(expression)) && ("hex".equals(encoding))) {
-      bitseq = new BigInteger(data, 16);
+      bigInt = new BigInteger(data, 16);
       type = CryptolType.WORD;
       checkValue();
       return;
@@ -249,7 +249,7 @@ public class CryptolValue {
       throw new UnsupportedOperationException("JSON result from Cryptol troublesome.\nJSON: " + json.toString());
     }
   }
-  
+
   public boolean getBit() {
     if (CryptolType.BIT == type) {
       return bit;
@@ -257,8 +257,11 @@ public class CryptolValue {
       throw new UnsupportedOperationException("Requested bit from a nonbit Cryotol value");
     }
   }
-  
+
   private void toJSON() {
+    if (null != json) {
+      throw new CryptolValueException("Redundant conversion to JSON.");
+    }
     json = new JSONObject();
     switch (type) {
       case BIT:
@@ -267,14 +270,14 @@ public class CryptolValue {
       case WORD:
         json.put("expression", "bits");
         json.put("encoding", "hex");
-        json.put("data", bitseq.toString(16));
+        json.put("data", bigInt.toString(16));
         json.put("width", size);
         break;
       default:
-        throw new UnsupportedOperationException("Conversion to JSON unimplemented for type `" + type + "'.");
+        throw new CryptolValueException("Conversion to JSON unimplemented for type `" + type + "'.");
     }
   }
-  
+
   public String toString() {
     try {
       fromJSON();
@@ -287,20 +290,20 @@ public class CryptolValue {
           }
         case WORD:
           if (0 == size % 4) {
-            String s = bitseq.toString(16);
+            String s = bigInt.toString(16);
             while (size / 4 > s.length()) {
               s = "0" + s;
             }
             return "0x" + s;
           }
           if (0 == size % 3) {
-            String s = bitseq.toString(8);
+            String s = bigInt.toString(8);
             while (size / 3 > s.length()) {
               s = "0" + s;
             }
             return "0o" + s;
           }
-          String s = bitseq.toString(2);
+          String s = bigInt.toString(2);
           while (size > s.length()) {
             s = "0" + s;
           }
@@ -312,5 +315,5 @@ public class CryptolValue {
       return json.toString();
     }
   }
-  
+
 }

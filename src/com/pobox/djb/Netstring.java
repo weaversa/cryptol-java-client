@@ -4,6 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
+/**
+ * Netstrings. Bernstein, Daniel Julius. djb@pobox.com. 1997-02-01. http://cr.yp.to/proto/netstrings.txt
+ */
+
 public class Netstring {
   
   public static byte[] render(CharSequence s, Charset charset) {
@@ -22,6 +26,8 @@ public class Netstring {
       }
       netstring[lengthLength + 1 + dataLength] = ',';
       return netstring;
+    } catch (NetstringException e) {
+      throw e;
     } catch (Exception e) {
       throw new NetstringException(e);
     }
@@ -30,14 +36,18 @@ public class Netstring {
   public static byte[] render(CharSequence s, String charsetName) {
     try {
       return render(s, Charset.forName(charsetName));
+    } catch (NetstringException e) {
+      throw e;
     } catch (Exception e) {
       throw new NetstringException(e);
     }
   }
-
+  
   public static byte[] render(CharSequence s) {
     try {
       return render(s, Charset.defaultCharset());
+    } catch (NetstringException e) {
+      throw e;
     } catch (Exception e) {
       throw new NetstringException(e);
     }
@@ -91,20 +101,22 @@ public class Netstring {
         throw new NetstringException("Netstring data not terminate with comma.");
       }
       s = new String(dataOctets, charset);
+    } catch (NetstringException e) {
+      throw e;
     } catch (Exception e) {
       throw new NetstringException(e);
     }
     return s;
   }
-
+  
   public static String parse(InputStream in, String charsetName) {
     return parse(in, Charset.forName(charsetName));
   }
-
+  
   public static String parse(InputStream in) {
     return parse(in, Charset.defaultCharset());
   }
-
+  
   public static String parse(byte[] netstring, Charset charset) {
     ByteArrayInputStream in = new ByteArrayInputStream(netstring);
     String s = parse(in, charset);
@@ -118,9 +130,9 @@ public class Netstring {
   public static String parse(byte[] netstring, String charsetName) {
     return parse(netstring, Charset.forName(charsetName));
   }
-
+  
   public static String parse(byte[] netstring) {
     return parse(netstring, Charset.defaultCharset());
   }
-
+  
 }

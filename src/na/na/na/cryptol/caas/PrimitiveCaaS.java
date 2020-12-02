@@ -23,7 +23,6 @@ public class PrimitiveCaaS {
   private BufferedOutputStream out;
   private Stack<String> states = new Stack<String>(); // states in never null
   private int id;
-  private boolean connected;
   private String latestModule;
   private Random random = new Random();
   
@@ -46,23 +45,21 @@ public class PrimitiveCaaS {
   
   private void reconnect() throws CaaSException {
     try {
-      socket    = new Socket(inetAddress, port);
-      in        = new BufferedInputStream(socket.getInputStream());
-      out       = new BufferedOutputStream(socket.getOutputStream());
+      socket = new Socket(inetAddress, port);
+      in = new BufferedInputStream(socket.getInputStream());
+      out = new BufferedOutputStream(socket.getOutputStream());
     }
     catch (Exception e) {
       throw new CaaSException ("Troublesome connection to CaaS.", e);
     }
-    connected = true;
-    id        = random.nextInt();
+    id = random.nextInt();
     resetState();
     loadModule("Cryptol");
   }
   
   private void disconnect() {
-    connected = false;
-    in     = null;
-    out    = null;
+    in = null;
+    out = null;
     socket = null;
   }
   
@@ -72,7 +69,7 @@ public class PrimitiveCaaS {
   }
   
   // do we want non-blocking IO?
-
+  
   private JSONObject transceive(JSONObject cryptolInput) throws CaaSException {
     try {
       cryptolInput.putOnce("jsonrpc", "2.0");
@@ -91,6 +88,8 @@ public class PrimitiveCaaS {
       System.out.println(">>>>> " + cryptolInput.toString());
       out.write(netstring, 0, netstring.length);
       out.flush();
+//    } catch (CaaSException e) {
+//      throw e;
     } catch (Exception e) {
       throw new CaaSException("Trouble sending to CaaS.", e);
     }
@@ -114,47 +113,47 @@ public class PrimitiveCaaS {
     }
   }
   
-//  private void send(JSONObject message) throws CaaSException {
-//    try {
-//      message.putOnce("jsonrpc", "2.0");
-//      if (!message.has("params")) {
-//        message.putOnce("params", new JSONObject());
-//      }
-//      JSONObject params = message.getJSONObject("params");
-//      if (states.empty() || null == states.peek()) {
-//        params.put("state", JSONObject.NULL);
-//      } else {
-//        params.put("state", states.peek());
-//      }
-//      id = random.nextInt();
-//      message.put("id", id);
-//      byte[] netstring = Netstring.render(message.toString(), "UTF-8");
-//      out.write(netstring, 0, netstring.length);
-//      out.flush();
-//    } catch (Exception e) {
-//      throw new CaaSException("Trouble sending to CaaS.", e);
-//    }
-//  }
-//
-//  private JSONObject receive() throws CaaSException {
-//    JSONObject jsonObject = null;
-//    try {
-//      jsonObject = new JSONObject(Netstring.parse(in, "UTF-8"));
-//      if (id != jsonObject.getInt("id")) {
-//        throw new CaaSException("Incorrect id in response from CaaS.");
-//      }
-//      JSONObject result = jsonObject.getJSONObject("result");
-//      String newState = result.getString("state");
-//      if (states.empty() || states.peek() != newState) {
-//        states.push(newState);
-//      }
-//      return result;
-//    } catch (CaaSException e) {
-//      throw e;
-//    } catch (Exception e) {
-//      throw new CaaSException("Trouble receiving from CaaS." + ((null == jsonObject) ? "" : ("JSON: " +  jsonObject.toString())), e);
-//    }
-//  }
+  //  private void send(JSONObject message) throws CaaSException {
+  //    try {
+  //      message.putOnce("jsonrpc", "2.0");
+  //      if (!message.has("params")) {
+  //        message.putOnce("params", new JSONObject());
+  //      }
+  //      JSONObject params = message.getJSONObject("params");
+  //      if (states.empty() || null == states.peek()) {
+  //        params.put("state", JSONObject.NULL);
+  //      } else {
+  //        params.put("state", states.peek());
+  //      }
+  //      id = random.nextInt();
+  //      message.put("id", id);
+  //      byte[] netstring = Netstring.render(message.toString(), "UTF-8");
+  //      out.write(netstring, 0, netstring.length);
+  //      out.flush();
+  //    } catch (Exception e) {
+  //      throw new CaaSException("Trouble sending to CaaS.", e);
+  //    }
+  //  }
+  //
+  //  private JSONObject receive() throws CaaSException {
+  //    JSONObject jsonObject = null;
+  //    try {
+  //      jsonObject = new JSONObject(Netstring.parse(in, "UTF-8"));
+  //      if (id != jsonObject.getInt("id")) {
+  //        throw new CaaSException("Incorrect id in response from CaaS.");
+  //      }
+  //      JSONObject result = jsonObject.getJSONObject("result");
+  //      String newState = result.getString("state");
+  //      if (states.empty() || states.peek() != newState) {
+  //        states.push(newState);
+  //      }
+  //      return result;
+  //    } catch (CaaSException e) {
+  //      throw e;
+  //    } catch (Exception e) {
+  //      throw new CaaSException("Trouble receiving from CaaS." + ((null == jsonObject) ? "" : ("JSON: " +  jsonObject.toString())), e);
+  //    }
+  //  }
   
   public JSONObject evaluateExpression(JSONObject expression) throws CaaSException {
     JSONObject message = new JSONObject();
@@ -162,8 +161,6 @@ public class PrimitiveCaaS {
     message.put("params", params);
     message.put("method", "evaluate expression");
     params.put("expression", expression);
-    //    send(message);
-    //    return receive();
     return transceive(message);
   }
   
@@ -173,8 +170,6 @@ public class PrimitiveCaaS {
     message.put("params", params);
     message.put("method", "evaluate expression");
     params.put("expression", command);
-    //    send(message);
-    //    return receive();
     return transceive(message);
   }
   
@@ -229,39 +224,39 @@ public class PrimitiveCaaS {
     return transceive(message);
   }
   
-  public JSONArray addArgument(JSONArray arguments, JSONObject argument) {
-    if (null == arguments) {
-      arguments = new JSONArray();
-    }
-    arguments.put(argument);
-    return arguments;
-  }
-  
-  public JSONArray addArgument(JSONArray arguments, String argument, int numBits) {
-    return addArgument(arguments, fromHex(argument, numBits));
-  }
-  
-  public JSONObject addToTuple(JSONObject tuple, JSONObject value) throws CaaSException {
-    JSONArray data;
-    if (null == tuple) {
-      tuple = new JSONObject();
-      tuple.put("expression", "tuple");
-      data = new JSONArray();
-      tuple.put("data", data);
-    } else {
-      try {
-        data = tuple.getJSONArray("data");
-      } catch (JSONException e) {
-        throw new CaaSException("Problem with `data' tag", e);
-      }
-    }
-    data.put(value);
-    return tuple;
-  }
-  
-  public JSONObject addToTuple(JSONObject tuple, String value, int numBits) throws CaaSException {
-    return addToTuple(tuple, fromHex(value, numBits));
-  }
+  //  public JSONArray addArgument(JSONArray arguments, JSONObject argument) {
+  //    if (null == arguments) {
+  //      arguments = new JSONArray();
+  //    }
+  //    arguments.put(argument);
+  //    return arguments;
+  //  }
+  //
+  //  public JSONArray addArgument(JSONArray arguments, String argument, int numBits) {
+  //    return addArgument(arguments, fromHex(argument, numBits));
+  //  }
+  //
+  //  public JSONObject addToTuple(JSONObject tuple, JSONObject value) throws CaaSException {
+  //    JSONArray data;
+  //    if (null == tuple) {
+  //      tuple = new JSONObject();
+  //      tuple.put("expression", "tuple");
+  //      data = new JSONArray();
+  //      tuple.put("data", data);
+  //    } else {
+  //      try {
+  //        data = tuple.getJSONArray("data");
+  //      } catch (JSONException e) {
+  //        throw new CaaSException("Problem with `data' tag", e);
+  //      }
+  //    }
+  //    data.put(value);
+  //    return tuple;
+  //  }
+  //
+  //  public JSONObject addToTuple(JSONObject tuple, String value, int numBits) throws CaaSException {
+  //    return addToTuple(tuple, fromHex(value, numBits));
+  //  }
   
   public static JSONObject fromHex(String hex, int numBits) {
     // System.out.println("*** " + hex + " " + numBits);
