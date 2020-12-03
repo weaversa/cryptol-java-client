@@ -13,17 +13,24 @@ public class NetstringTest {
         
   public static void main(String[] args) {
     
-    // System.out.println("\nDefault charset: " + Charset.defaultCharset() + "\n");
-    
-    System.out.println("Available charsets: " + Charset.availableCharsets().keySet().size() + "\n");
-        
     System.out.println();
+
+    System.out.println("Default charset: " + Charset.defaultCharset() + "\n");
+
+    System.out.println();
+
+    System.out.println("Available charsets: " + Charset.availableCharsets().keySet().size());
+
+    System.out.println();
+
     byte[] emptyNetstring = new byte[] {0x30, 0x3a, 0x2c};
-    System.out.println("Checking emptyNetstring rendering: " + Arrays.equals(emptyNetstring, Netstring.render("")));
+    System.out.println("Checking emptyNetstring rendering: " + Arrays.equals(emptyNetstring, Netstring.render("")) + " && " + "".equals(Netstring.parse(emptyNetstring)));
     
     System.out.println();
+
+    String helloWorld = "hello world!";
     byte[] helloWorldNetstring = new byte[] {0x31, 0x32, 0x3a, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x2c};
-    System.out.println("Checking helloWorldNetstring rendering: " + Arrays.equals(helloWorldNetstring, Netstring.render("hello world!")));
+    System.out.println("Checking helloWorldNetstring rendering: " + Arrays.equals(helloWorldNetstring, Netstring.render(helloWorld)) + " && " + helloWorld.equals(Netstring.parse(helloWorldNetstring)));
     
     System.out.println();
     byte[] questionableNetstring = {49, 58, 63, 44};
@@ -33,25 +40,31 @@ public class NetstringTest {
       byte[] bs = Netstring.render(s);
       if (MIN_SURROGATE_CODE_POINT <= i && i <= MAX_SURROGATE_CODE_POINT) {
         if (!Arrays.equals(bs, questionableNetstring)) {
-          System.out.println("Invalid code point behaved unexpectedly: " + i );
+          System.out.println("Surrogate code point behaved unexpectedly: " + i );
         }
       } else {
         if (false) {
         } else if (   MIN_BASIC_MULTILINGUAL_PLANE_CODE_POINT <= i
                    && i <= MAX_BASIC_MULTILINGUAL_PLANE_CODE_POINT) {
           if (1 != s.length()) {
-            System.out.println("Code point " + i + " produced unexpected length " + s.length() + ".");
+            System.out.println("Basic multilingual plane code point " + i + " produced unexpected length " + s.length() + ".");
           }
         } else if (   MIN_SUPPLEMENTARY_PLANES_CODE_POINT <= i
                    && i <= MAX_SUPPLEMENTARY_PLANES_CODE_POINT) {
           if (2 != s.length()) {
-            System.out.println("Code point " + i + " produced unexpected length " + s.length() + ".");
+            System.out.println("Supplementary planes code point " + i + " produced unexpected length " + s.length() + ".");
           }
         } else {
-          System.out.println(i + " untested for string conversion length.");
+          System.out.println("Code point " + i + " untested for string conversion length.");
         }
         if (!s.equals(Netstring.parse(bs))) {
-          System.out.println("Failed for codepoint: " + i );
+          System.out.println("Netstring.parse failed for codepoint: " + i );
+          System.out.println("  s.codePointAt(0): " + s.codePointAt(0));
+          System.out.println("  Corresponding string, \"" + s + "\", has length " + s.length());
+          System.out.println("  Rendered netstring: " + Arrays.toString(bs));
+        }
+        if (!Arrays.equals(bs, Netstring.render(s))) {
+          System.out.println("Netstring.render failed for codepoint: " + i );
           System.out.println("  s.codePointAt(0): " + s.codePointAt(0));
           System.out.println("  Corresponding string, \"" + s + "\", has length " + s.length());
           System.out.println("  Rendered netstring: " + Arrays.toString(bs));
