@@ -1,4 +1,5 @@
 import com.pobox.djb.Netstring;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Random;
@@ -73,9 +74,9 @@ public class NetstringTest {
     }
     System.out.println("Completed testing of all individual code points.");
     
-    int RANDOM_STRING_TESTS = 10000000;
-    
     System.out.println();
+
+    int RANDOM_STRING_TESTS = 100000;
     int[] lengths = new int[128];
     for (int i = 0; i < RANDOM_STRING_TESTS; i++) {
       System.out.print(i + " " + (100 * i / RANDOM_STRING_TESTS) + "%...\r");
@@ -88,6 +89,40 @@ public class NetstringTest {
       }
     }
     System.out.println("Random string tests completed.");
+    System.out.println("  Lengths histogram: " + Arrays.toString(lengths));
+
+    System.out.println();
+
+    Arrays.fill(lengths, 0);
+    int RANDOM_BYTE_ARRAY_TESTS = 1000000;
+    for (int i = 0; i < RANDOM_BYTE_ARRAY_TESTS; i++) {
+      System.out.print(i + " " + (100 * i / RANDOM_STRING_TESTS) + "%...\r");
+      int n = randomLength();
+      lengths[n]++;
+      String length = String.valueOf(n);
+      int m = length.length() + 1 + n + 1;
+      ByteBuffer bb = ByteBuffer.allocate(m);
+//      System.out.println("");
+//      System.out.println("  --- " + n);
+//      System.out.println("0 --- " + bb.position());
+      bb.put(length.getBytes());
+//      System.out.println("1 --- " + bb.position());
+      bb.put((byte) ':');
+//      System.out.println("2 --- " + bb.position());
+      bb.put(randomUTF8ByteArray(n));
+//      System.out.println("3 --- " + bb.position());
+      bb.put((byte) ',');
+//      System.out.println("4 --- " + bb.position());
+      byte[] bs = bb.array();
+      if (!Arrays.equals(bs, Netstring.render(Netstring.parse(bs)))) {
+        System.out.println("");
+        System.out.println("Failed for bytes: " + Arrays.toString(bs));
+        System.out.println("      comparison: " + Arrays.toString(Netstring.render(Netstring.parse(bs))));
+        System.out.println("           parse: " + Netstring.parse(bs));
+        break;
+      }
+    }
+    System.out.println("Random byte array tests completed.");
     System.out.println("  Lengths histogram: " + Arrays.toString(lengths));
 
     System.out.println();
@@ -116,6 +151,45 @@ public class NetstringTest {
   
   private static String randomString(int n) {
     return new String(randomCodePoints(n), 0, n);
+  }
+  
+  private static byte[] randomUTF8ByteArray() {
+    return randomUTF8ByteArray(randomLength());
+  }
+  
+  private static byte[] randomUTF8ByteArray(int n) {
+    byte[] bs = new byte[n];
+    byte[] ss = new byte[1];
+    random.nextBytes(bs);
+    int i = 0;
+    while (i < n) {
+      if (false) {
+      } else if (((byte)   0) <= bs[i] && bs[i] <= ((byte) 127) && i < n - 0) {
+        for (int j = 1; j < 0; j++) {
+          bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
+        }
+        i += 1;
+      } else if (((byte) 192) <= bs[i] && bs[i] <= ((byte) 223) && i < n - 1) {
+        for (int j = 1; j < 1; j++) {
+          bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
+        }
+        i += 2;
+      } else if (((byte) 224) <= bs[i] && bs[i] <= ((byte) 239) && i < n - 2) {
+        for (int j = 1; j < 2; j++) {
+          bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
+        }
+        i += 3;
+      } else if (((byte) 240) <= bs[i] && bs[i] <= ((byte) 247) && i < n - 3) {
+        for (int j = 1; j < 3; j++) {
+          bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
+        }
+        i += 4;
+      } else {
+        random.nextBytes(ss);
+        bs[i] = ss[0];
+      }
+    }
+    return bs;
   }
   
   public static final int MIN_BASIC_MULTILINGUAL_PLANE_CODE_POINT = 0x0; // 0
