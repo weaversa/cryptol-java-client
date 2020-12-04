@@ -10,23 +10,29 @@ public class ModuleSpecificCaaS {
   private PrimitiveCaaS caas;
   
   private static int CALL_ATTEMPTS = 3;
-  private static long ATTEMPT_DELAY = 2000;
+  private static long ATTEMPT_DELAY_ms = 2000;
   
   public static ModuleSpecificCaaS SUITE_B;
   static {
     try {
-      SUITE_B = new ModuleSpecificCaaS("localhost", 65521, "SuiteB");
+      SUITE_B = new ModuleSpecificCaaS("SuiteB");
     } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }
   }
   
   public ModuleSpecificCaaS(String hostOrIP, int port, String module) throws CaaSException {
+    caas = new PrimitiveCaaS(hostOrIP, port);
+    caas.loadModule(module);
     this.hostOrIP = hostOrIP;
     this.port = port;
     this.module = module;
-    caas = new PrimitiveCaaS(hostOrIP, port);
+  }
+  
+  public ModuleSpecificCaaS(String module) throws CaaSException {
+    caas = new PrimitiveCaaS();
     caas.loadModule(module);
+    this.module = module;
   }
   
   private CryptolValue callFunction(String f, CryptolValue[] ins) throws CaaSException {
@@ -39,14 +45,18 @@ public class ModuleSpecificCaaS {
       try {
         return new CryptolValue(caas.call(f, args));
       } catch (CaaSException e) {
-        es[i] = e;
-        caas = new PrimitiveCaaS(hostOrIP, port);
-        caas.loadModule(module);
         try {
-          Thread.sleep(ATTEMPT_DELAY);
+          Thread.sleep(ATTEMPT_DELAY_ms);
         } catch (InterruptedException ie) {
           throw new CaaSException(ie);
         }
+        es[i] = e;
+        if (null == hostOrIP) {
+          caas = new PrimitiveCaaS();
+        } else {
+          caas = new PrimitiveCaaS(hostOrIP, port);
+        }
+        caas.loadModule(module);
       }
     }
     throw new CaaSException("callFunction `" + f + "' failed after " + CALL_ATTEMPTS + "attempt(s). Stack traces for all attempts displayed as one. Read carefully!", es);

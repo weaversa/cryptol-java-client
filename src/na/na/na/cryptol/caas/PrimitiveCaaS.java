@@ -15,7 +15,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class PrimitiveCaaS {
-  private String hostOrIP;
   private InetAddress inetAddress;
   private int port;
   private Socket socket;
@@ -26,21 +25,50 @@ public class PrimitiveCaaS {
   private String latestModule;
   private Random random = new Random();
   
-  public PrimitiveCaaS(String hostOrIP, int port) throws CaaSException {
-    try {
-      this.hostOrIP = hostOrIP;
-      this.inetAddress = InetAddress.getByName(hostOrIP);
-      this.port = port;
-    } catch (Exception e) {
-      throw new CaaSException("Trouble converting `" + hostOrIP + "' InetAddress.", e);
-    }
-    reconnect();
+  public PrimitiveCaaS() throws CaaSException {
+    this(defaultHostOrIP(), defaultPort().intValue());
+  }
+  
+  public PrimitiveCaaS(String hostOrIP, int port) throws CaaSException {    this(getByName(hostOrIP), port);
   }
   
   public PrimitiveCaaS(InetAddress inetAddress, int port) throws CaaSException {
+    System.out.println("*****" + inetAddress + ":" + port);
     this.inetAddress = inetAddress;
     this.port = port;
     reconnect();
+  }
+  
+  public static String defaultHostOrIP() {
+    try {
+      return System.getProperty("na.na.na.cryptol.caas.hostOrIP");
+    } catch (Throwable t) {
+      return null;
+    }
+  }
+  
+  public static Integer defaultPort() {
+    try {
+      return Integer.valueOf(System.getProperty("na.na.na.cryptol.caas.port"));
+    } catch (Throwable t) {
+      return null;
+    }
+  }
+  
+  private static InetAddress getByName(String hostOrIP) throws CaaSException {
+    try {
+      return InetAddress.getByName(hostOrIP);
+    } catch (Throwable t) {
+      throw new CaaSException("Trouble converting `" + hostOrIP + "' to InetAddress.", t);
+    }
+  }
+  
+  public InetAddress getInetAddress() {
+    return inetAddress;
+  }
+  
+  public int getPort() {
+    return port;
   }
   
   private void reconnect() throws CaaSException {
@@ -88,8 +116,8 @@ public class PrimitiveCaaS {
       System.out.println(">>>>> " + cryptolInput.toString());
       out.write(netstring, 0, netstring.length);
       out.flush();
-//    } catch (CaaSException e) {
-//      throw e;
+      //    } catch (CaaSException e) {
+      //      throw e;
     } catch (Exception e) {
       throw new CaaSException("Trouble sending to CaaS.", e);
     }

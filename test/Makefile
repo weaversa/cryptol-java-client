@@ -1,14 +1,36 @@
 
-CLASSPATH = ../lib/caas-etc.jar:.
+HOST = localhost
+
+# PORT = 65521
+
+PORT = 65519
+
+CLASSPATH = -cp ../lib/caas-etc.jar:.
+
+SYSPROPS = -Dna.na.na.cryptol.caas.hostOrIP=$(HOST) -Dna.na.na.cryptol.caas.port=$(PORT)
+
+JAVAC = javac $(CLASSPATH) -Werror
+
+JAVA = java $(CLASSPATH) $(SYSPROPS)
+
 
 default:
-	# killall -v cryptol-remote-api || true
-	# ~/unix-roots/cryptol-2.9.1.99-2020-10-20/bin/cryptol-remote-api --port 65521 --public &
-	javac -cp $(CLASSPATH) NetstringTest.java
-	java  -cp $(CLASSPATH) NetstringTest
-	javac -cp $(CLASSPATH) sha224.java
-	java  -cp $(CLASSPATH) sha224
-	javac -cp $(CLASSPATH) ModuleSpecificCaaSTest.java
-	java  -cp $(CLASSPATH) ModuleSpecificCaaSTest
-	javac -cp $(CLASSPATH) PrimitiveCaaSTest.java
-	java  -cp $(CLASSPATH) PrimitiveCaaSTest localhost 65521
+	$(JAVAC) sha224.java
+	$(JAVA) sha224
+	$(JAVAC) ModuleSpecificCaaSTest.java
+	$(JAVA) ModuleSpecificCaaSTest
+	$(JAVAC) PrimitiveCaaSTest.java
+	$(JAVA) PrimitiveCaaSTest
+
+clean:
+	killall -v cryptol-remote-api || true
+	find . -name '*.class' -execdir rm -- {} \;
+
+server:
+	killall -v cryptol-remote-api || true
+	~/unix-roots/cryptol-2.9.1.99-2020-10-20/bin/cryptol-remote-api --port $(PORT) --public &
+
+netstring:
+	$(JAVAC) NetstringTest.java
+	java $(CLASSPATH) NetstringTest
+	

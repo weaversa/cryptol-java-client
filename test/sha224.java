@@ -14,7 +14,7 @@ public class sha224 {
   
   public sha224() throws CaaSException {
     
-    ModuleSpecificCaaS suiteB = new ModuleSpecificCaaS("localhost", 65521, "SuiteB");
+    ModuleSpecificCaaS suiteB = new ModuleSpecificCaaS("SuiteB");
     System.out.println("Evaluating `sha224' ...");
     CryptolValue in = new CryptolValue(352, "54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f672e", 16);
     

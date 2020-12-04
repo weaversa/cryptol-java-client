@@ -9,7 +9,7 @@ public class PrimitiveCaaSTest {
     
     JSONArray arguments = new JSONArray();
 
-    PrimitiveCaaS caas = new PrimitiveCaaS(args[0], Integer.parseInt(args[1]));
+    PrimitiveCaaS caas = (2 == args.length) ? new PrimitiveCaaS(args[0], Integer.parseInt(args[1])) : new PrimitiveCaaS();
     System.out.println("Connected to CaaS without exception.\n");
 
     System.out.println("Evaluating `False'...");

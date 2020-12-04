@@ -13,7 +13,7 @@ public class NetstringTest {
    */
         
   public static void main(String[] args) {
-    
+        
     System.out.println();
 
     System.out.println("Default charset: " + Charset.defaultCharset() + "\n");
@@ -118,7 +118,8 @@ public class NetstringTest {
         System.out.println("");
         System.out.println("Failed for bytes: " + Arrays.toString(bs));
         System.out.println("      comparison: " + Arrays.toString(Netstring.render(Netstring.parse(bs))));
-        System.out.println("           parse: " + Netstring.parse(bs));
+        System.out.println("  parse as bytes: " + Arrays.toString(Netstring.parse(bs).getBytes()));
+        System.out.println("  parse as chars: " + Arrays.toString(Netstring.parse(bs).toCharArray()));
         break;
       }
     }
@@ -164,23 +165,23 @@ public class NetstringTest {
     int i = 0;
     while (i < n) {
       if (false) {
-      } else if (((byte)   0) <= bs[i] && bs[i] <= ((byte) 127) && i < n - 0) {
-        for (int j = 1; j < 0; j++) {
-          bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
-        }
-        i += 1;
-      } else if (((byte) 192) <= bs[i] && bs[i] <= ((byte) 223) && i < n - 1) {
+      } else if (  0 <= bs[i] && bs[i] <= 127 && i < n - 0) {
         for (int j = 1; j < 1; j++) {
           bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
         }
-        i += 2;
-      } else if (((byte) 224) <= bs[i] && bs[i] <= ((byte) 239) && i < n - 2) {
+        i += 1;
+      } else if (-64 <= bs[i] && bs[i] <= -33 && i < n - 1) {
         for (int j = 1; j < 2; j++) {
           bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
         }
-        i += 3;
-      } else if (((byte) 240) <= bs[i] && bs[i] <= ((byte) 247) && i < n - 3) {
+        i += 2;
+      } else if (-32 <= bs[i] && bs[i] <= -17 && i < n - 2) {
         for (int j = 1; j < 3; j++) {
+          bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
+        }
+        i += 3;
+      } else if (-16 <= bs[i] && bs[i] <= -9 && i < n - 3) {
+        for (int j = 1; j < 4; j++) {
           bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
         }
         i += 4;
