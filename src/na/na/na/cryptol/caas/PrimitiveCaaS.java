@@ -33,7 +33,7 @@ public class PrimitiveCaaS {
   }
   
   public PrimitiveCaaS(InetAddress inetAddress, int port) throws CaaSException {
-    System.out.println("*****" + inetAddress + ":" + port);
+//    System.out.println("*****" + inetAddress + ":" + port);
     this.inetAddress = inetAddress;
     this.port = port;
     reconnect();
@@ -113,7 +113,7 @@ public class PrimitiveCaaS {
       id = random.nextInt();
       cryptolInput.put("id", id);
       byte[] netstring = Netstring.render(cryptolInput.toString(), "UTF-8");
-      System.out.println(">>>>> " + cryptolInput.toString());
+//      System.out.println(">>>>> " + cryptolInput.toString());
       out.write(netstring, 0, netstring.length);
       out.flush();
       //    } catch (CaaSException e) {
@@ -124,7 +124,7 @@ public class PrimitiveCaaS {
     JSONObject cryptolOutput = null;
     try {
       cryptolOutput = new JSONObject(Netstring.parse(in, "UTF-8"));
-      System.out.println("<<<<< " + cryptolOutput.toString());
+//      System.out.println("<<<<< " + cryptolOutput.toString());
       if (cryptolOutput.getInt("id") != id) {
         throw new CaaSException("Incorrect id in response from CaaS.");
       }
