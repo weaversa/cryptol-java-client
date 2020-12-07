@@ -1,7 +1,9 @@
 package na.na.na.cryptol;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import static na.na.na.cryptol.CryptolType.*;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -48,6 +50,7 @@ public class CryptolValue {
   private BigInteger bigInt;
   private BigInteger modulus; // n for Z n or 2^n for [n] or 0 for Integer or null for other types
   private int size; // n for [n] so we're disallowing [n] where n > Integer.MAX_VALUE == 2^^31 - 1
+  private CryptolValue[] sequence;
 
   public CryptolValue(JSONObject jsonObject) {
     json = jsonObject;
@@ -58,7 +61,7 @@ public class CryptolValue {
     calculateModulus();
     type = CryptolType.WORD;
     bigInt = new BigInteger(digits, radix);
-    if (size < 0) {
+    if (0 > size) {
       throw new IllegalArgumentException();
     }
     if (0 > bigInt.signum()) {
@@ -71,7 +74,11 @@ public class CryptolValue {
   }
 
   public CryptolValue(String digits, int radix) {
-    new CryptolValue(calculateSize(digits, radix), digits, radix);
+    this(calculateSize(digits, radix), digits, radix);
+  }
+  
+  public CryptolValue(BinaryString b) {
+    this(b.toString(), 2);
   }
 
   public CryptolValue(BigInteger big) {
@@ -83,8 +90,31 @@ public class CryptolValue {
   }
 
   public CryptolValue(boolean bool) {
-    bit = bool;
     type = BIT;
+    bit = bool;
+    toJSON();
+  }
+
+  public CryptolValue(CryptolValue[] cvs) {
+    type = SEQUENCE;
+    if (null == cvs) {
+      sequence = new CryptolValue[] {};
+    } else {
+      sequence = Arrays.copyOf(cvs, cvs.length); // (CryptolValue[])
+    }
+    toJSON();
+  }
+
+  public CryptolValue(BinaryString[] bs) {
+    type = SEQUENCE;
+    if (null == bs) {
+      sequence = new CryptolValue[] {};
+    } else {
+      sequence = new CryptolValue[bs.length];
+      for (int i = 0; i < bs.length; i++) {
+        sequence[i] = new CryptolValue(bs[i]);
+      }
+    }
     toJSON();
   }
 
@@ -97,6 +127,8 @@ public class CryptolValue {
       return json.getJSONObject("result").getJSONObject("answer").getJSONObject("value");
     } catch (JSONException e) {
       return json;
+    } catch (NullPointerException e) {
+      return json;
     }
   }
 
@@ -104,10 +136,10 @@ public class CryptolValue {
     switch (radix) {
       case 2:
         return digits.length();
-      case 16:
-        return 4 * digits.length();
       case 8:
         return 3 * digits.length();
+      case 16:
+        return 4 * digits.length();
       default:
         throw new IllegalArgumentException("Radix must be 2, 8 or 16, rather than " + radix + '.');
     }
@@ -128,17 +160,17 @@ public class CryptolValue {
   private void checkValue() {
     switch (type) {
       case RESIDUE:
-      case WORD: //TODO: o modulus no check on bigInt
-        if (0 > modulus.signum()) {
-          throw new CryptolValueException("Negative modulus");
-        }
-        if (bigInt.compareTo(modulus) >= 0) {
-          throw new CryptolValueException("Value exceeds maximum for size or modulus.");
-        }
-        if (modulus.signum() > 0) {
-          if (bigInt.signum() < 0) {
-            throw new CryptolValueException("Negative bigInt.");
-          }
+      case WORD:
+        switch (modulus.signum()) {
+          case -1:
+            throw new CryptolValueException("Negative modulus.");
+          case 1:
+            if ((bigInt.signum() < 0) || (bigInt.compareTo(modulus) >= 0)) {
+              throw new CryptolValueException("Value not a proper residue.");
+            }
+            break;
+          case 0:
+            break;
         }
         break;
       default:
@@ -218,7 +250,7 @@ public class CryptolValue {
       case WORD:
       case RESIDUE:
         if (null == bigInt) {
-          throw new UnsupportedOperationException("Could not parse result from Cryptol");
+          throw new NullPointerException("Internal representation inexplicably null.");
         }
         return bigInt;
       default:
@@ -260,7 +292,7 @@ public class CryptolValue {
 
   private void toJSON() {
     if (null != json) {
-      throw new CryptolValueException("Redundant conversion to JSON.");
+      return;
     }
     json = new JSONObject();
     switch (type) {
@@ -272,6 +304,15 @@ public class CryptolValue {
         json.put("encoding", "hex");
         json.put("data", bigInt.toString(16));
         json.put("width", size);
+        break;
+      case SEQUENCE:
+        json.put("expression", "sequence");
+        JSONArray data = new JSONArray();
+        for (int i = 0; i < sequence.length; i++) {
+          data.put(sequence[i].json);
+        }
+        json.put("data", data);
+        System.err.println(json);
         break;
       default:
         throw new CryptolValueException("Conversion to JSON unimplemented for type `" + type + "'.");

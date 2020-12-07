@@ -21,17 +21,14 @@ public class sha224 {
     {
       CryptolValue out = suiteB.call("sha224", in);
       System.out.println(out + "\n");
-      System.out.println(out.toHexString() + "\n");
     }
     {
       CryptolValue out = suiteB.call(this.getClass().getSimpleName(), in);
       System.out.println(out + "\n");
-      System.out.println(out.toHexString() + "\n");
     }
     {
       CryptolValue out = suiteB.call(functionName(), in);
       System.out.println(out + "\n");
-      System.out.println(out.toHexString() + "\n");
     }
 /* could maybe make the following work, so that an unspecified function name is taken to be the class name
     {

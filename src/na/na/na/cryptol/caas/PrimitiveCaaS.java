@@ -15,7 +15,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class PrimitiveCaaS {
-  private InetAddress inetAddress;
+  private String hostOrIP;
+//  private InetAddress inetAddress;
   private int port;
   private Socket socket;
   private BufferedInputStream in;
@@ -29,15 +30,23 @@ public class PrimitiveCaaS {
     this(defaultHostOrIP(), defaultPort().intValue());
   }
   
-  public PrimitiveCaaS(String hostOrIP, int port) throws CaaSException {    this(getByName(hostOrIP), port);
-  }
-  
-  public PrimitiveCaaS(InetAddress inetAddress, int port) throws CaaSException {
-//    System.out.println("*****" + inetAddress + ":" + port);
-    this.inetAddress = inetAddress;
+  public PrimitiveCaaS(String hostOrIP, int port) throws CaaSException {
+    this.hostOrIP = hostOrIP;
     this.port = port;
     reconnect();
+//    this(getByName(hostOrIP), hostOrIP, port);
   }
+  
+//  public PrimitiveCaaS(InetAddress inetAddress, String hostOrIP, int port) throws CaaSException {
+//    this.inetAddress = inetAddress;
+//    this.hostOrIP = hostOrIP;
+//    this.port = port;
+//    reconnect();
+//  }
+  
+//  public PrimitiveCaaS(InetAddress inetAddress, int port) throws CaaSException {
+//    this(inetAddress, null, port);
+//  }
   
   public static String defaultHostOrIP() {
     try {
@@ -55,32 +64,35 @@ public class PrimitiveCaaS {
     }
   }
   
-  private static InetAddress getByName(String hostOrIP) throws CaaSException {
-    try {
-      return InetAddress.getByName(hostOrIP);
-    } catch (Throwable t) {
-      throw new CaaSException("Trouble converting `" + hostOrIP + "' to InetAddress.", t);
-    }
-  }
+//  private static InetAddress getByName(String hostOrIP) throws CaaSException {
+//    try {
+//      return InetAddress.getByName(hostOrIP);
+//    } catch (Throwable t) {
+//      throw new CaaSException("Trouble converting `" + hostOrIP + "' to InetAddress.", t);
+//    }
+//  }
+//
+//  public InetAddress getInetAddress() {
+//    return inetAddress;
+//  }
   
-  public InetAddress getInetAddress() {
-    return inetAddress;
+  public String getHostOrIP() {
+    return hostOrIP;
   }
-  
+
   public int getPort() {
     return port;
   }
   
   private void reconnect() throws CaaSException {
     try {
-      socket = new Socket(inetAddress, port);
+      socket = new Socket(hostOrIP, port);
       in = new BufferedInputStream(socket.getInputStream());
       out = new BufferedOutputStream(socket.getOutputStream());
     }
     catch (Exception e) {
-      throw new CaaSException ("Troublesome connection to CaaS.", e);
+      throw new CaaSException ("Troublesome connection to CaaS, hosrOrIP: `" + hostOrIP + "', port: `" + port + "'.", e);
     }
-    id = random.nextInt();
     resetState();
     loadModule("Cryptol");
   }

@@ -16,7 +16,7 @@ public class NetstringTest {
         
     System.out.println();
 
-    System.out.println("Default charset: " + Charset.defaultCharset() + "\n");
+    System.out.println("Default charset: " + Charset.defaultCharset());
 
     System.out.println();
 
@@ -24,109 +24,155 @@ public class NetstringTest {
 
     System.out.println();
 
-    byte[] emptyNetstring = new byte[] {0x30, 0x3a, 0x2c};
-    System.out.println("Checking emptyNetstring rendering: " + Arrays.equals(emptyNetstring, Netstring.render("")) + " && " + "".equals(Netstring.parse(emptyNetstring)));
+    {
+      byte[] emptyNetstring = new byte[] {0x30, 0x3a, 0x2c};
+      System.out.println("Checking emptyNetstring rendering/parsing: " + Arrays.equals(emptyNetstring, Netstring.render("")) + " && " + "".equals(Netstring.parse(emptyNetstring)));
+    }
     
     System.out.println();
 
-    String helloWorld = "hello world!";
-    byte[] helloWorldNetstring = new byte[] {0x31, 0x32, 0x3a, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x2c};
-    System.out.println("Checking helloWorldNetstring rendering: " + Arrays.equals(helloWorldNetstring, Netstring.render(helloWorld)) + " && " + helloWorld.equals(Netstring.parse(helloWorldNetstring)));
+    {
+      String helloWorld = "hello world!";
+      byte[] helloWorldNetstring = new byte[] {0x31, 0x32, 0x3a, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x2c};
+      System.out.println("Checking helloWorldNetstring rendering/parsing: " + Arrays.equals(helloWorldNetstring, Netstring.render(helloWorld)) + " && " + helloWorld.equals(Netstring.parse(helloWorldNetstring)));
+    }
     
     System.out.println();
-    byte[] questionableNetstring = {49, 58, 63, 44};
-    for (int i = MIN_CODE_POINT; i <= MAX_CODE_POINT; i++) {
-      System.out.print(i + " " + (100 * i) / CODE_POINTS + "%...\r");
-      String s = new String(new int[] {i}, 0, 1);
-      byte[] bs = Netstring.render(s);
-      if (MIN_SURROGATE_CODE_POINT <= i && i <= MAX_SURROGATE_CODE_POINT) {
-        if (!Arrays.equals(bs, questionableNetstring)) {
-          System.out.println("Surrogate code point behaved unexpectedly: " + i );
-        }
-      } else {
-        if (false) {
-        } else if (   MIN_BASIC_MULTILINGUAL_PLANE_CODE_POINT <= i
-                   && i <= MAX_BASIC_MULTILINGUAL_PLANE_CODE_POINT) {
-          if (1 != s.length()) {
-            System.out.println("Basic multilingual plane code point " + i + " produced unexpected length " + s.length() + ".");
-          }
-        } else if (   MIN_SUPPLEMENTARY_PLANES_CODE_POINT <= i
-                   && i <= MAX_SUPPLEMENTARY_PLANES_CODE_POINT) {
-          if (2 != s.length()) {
-            System.out.println("Supplementary planes code point " + i + " produced unexpected length " + s.length() + ".");
+    
+    {
+      byte[] questionableNetstring = {49, 58, 63, 44};
+      for (int i = MIN_CODE_POINT; i <= MAX_CODE_POINT; i++) {
+        System.out.print(i + " " + (100 * i) / CODE_POINTS + "%...\r");
+        String s = new String(new int[] {i}, 0, 1);
+        byte[] bs = Netstring.render(s);
+        if (MIN_SURROGATE_CODE_POINT <= i && i <= MAX_SURROGATE_CODE_POINT) {
+          if (!Arrays.equals(bs, questionableNetstring)) {
+            System.out.println("Surrogate code point behaved unexpectedly: " + i );
           }
         } else {
-          System.out.println("Code point " + i + " untested for string conversion length.");
-        }
-        if (!s.equals(Netstring.parse(bs))) {
-          System.out.println("Netstring.parse failed for codepoint: " + i );
-          System.out.println("  s.codePointAt(0): " + s.codePointAt(0));
-          System.out.println("  Corresponding string, \"" + s + "\", has length " + s.length());
-          System.out.println("  Rendered netstring: " + Arrays.toString(bs));
-        }
-        if (!Arrays.equals(bs, Netstring.render(s))) {
-          System.out.println("Netstring.render failed for codepoint: " + i );
-          System.out.println("  s.codePointAt(0): " + s.codePointAt(0));
-          System.out.println("  Corresponding string, \"" + s + "\", has length " + s.length());
-          System.out.println("  Rendered netstring: " + Arrays.toString(bs));
+          if (false) {
+          } else if (MIN_BASIC_MULTILINGUAL_PLANE_CODE_POINT <= i && i <= MAX_BASIC_MULTILINGUAL_PLANE_CODE_POINT) {
+            if (1 != s.length()) {
+              System.out.println("Basic multilingual plane code point " + i + " produced unexpected length " + s.length() + ".");
+            }
+          } else if (MIN_SUPPLEMENTARY_PLANES_CODE_POINT <= i && i <= MAX_SUPPLEMENTARY_PLANES_CODE_POINT) {
+            if (2 != s.length()) {
+              System.out.println("Supplementary planes code point " + i + " produced unexpected length " + s.length() + ".");
+            }
+          } else {
+            System.out.println("Code point " + i + " untested for string conversion length.");
+          }
+          if (!s.equals(Netstring.parse(bs))) {
+            System.out.println("Netstring.parse failed for codepoint: " + i );
+            System.out.println("  s.codePointAt(0): " + s.codePointAt(0));
+            System.out.println("  Corresponding string, \"" + s + "\", has length " + s.length());
+            System.out.println("  Rendered netstring: " + Arrays.toString(bs));
+          }
+          if (!Arrays.equals(bs, Netstring.render(s))) {
+            System.out.println("Netstring.render failed for codepoint: " + i );
+            System.out.println("  s.codePointAt(0): " + s.codePointAt(0));
+            System.out.println("  Corresponding string, \"" + s + "\", has length " + s.length());
+            System.out.println("  Rendered netstring: " + Arrays.toString(bs));
+          }
+          byte[] cs = codePointToUTF8Bytes(i);
+          for (int j = 0; j < cs.length; j++) {
+            if (bs[bs.length - cs.length - 1 + j] != cs[j]) {
+              System.out.println("Netstring.render failed for codepoint: " + i );
+              System.out.println("    s.codePointAt(0): " + s.codePointAt(0));
+              System.out.println("  Rendered netstring: " + Arrays.toString(bs));
+              System.out.println("         UTF-8 bytes: " + Arrays.toString(cs));
+              break;
+            }
+          }
         }
       }
+      System.out.println("Tested parsing/rendering of all individual code points.");
     }
-    System.out.println("Completed testing of all individual code points.");
     
     System.out.println();
 
-    int RANDOM_STRING_TESTS = 100000;
-    int[] lengths = new int[128];
-    for (int i = 0; i < RANDOM_STRING_TESTS; i++) {
-      System.out.print(i + " " + (100 * i / RANDOM_STRING_TESTS) + "%...\r");
-      int n = randomLength();
-      lengths[n]++;
-      int[] cs = randomCodePoints(n);
-      String s = new String(cs, 0, cs.length);
-      if (!s.equals(Netstring.parse(Netstring.render(s)))) {
-        System.out.println("Failed for codepoints: " + Arrays.toString(cs));
+    {
+      int RANDOM_STRING_TESTS = 10000019;
+      int[] lengths = new int[128];
+      for (int i = 0; i < RANDOM_STRING_TESTS; i++) {
+        System.out.print(i + " " + (100 * i / RANDOM_STRING_TESTS) + "%...\r");
+        int n = randomLength();
+        lengths[n]++;
+        int[] cs = randomCodePoints(n);
+        String s = new String(cs, 0, cs.length);
+        if (!s.equals(Netstring.parse(Netstring.render(s)))) {
+          System.out.println("Failed for codepoints: " + Arrays.toString(cs));
+        }
       }
+      System.out.println(RANDOM_STRING_TESTS + " random string tests completed.");
+      System.out.println("  Lengths histogram: " + Arrays.toString(lengths));
     }
-    System.out.println("Random string tests completed.");
-    System.out.println("  Lengths histogram: " + Arrays.toString(lengths));
 
     System.out.println();
 
-    Arrays.fill(lengths, 0);
-    int RANDOM_BYTE_ARRAY_TESTS = 1000000;
-    for (int i = 0; i < RANDOM_BYTE_ARRAY_TESTS; i++) {
-      System.out.print(i + " " + (100 * i / RANDOM_STRING_TESTS) + "%...\r");
-      int n = randomLength();
-      lengths[n]++;
-      String length = String.valueOf(n);
-      int m = length.length() + 1 + n + 1;
-      ByteBuffer bb = ByteBuffer.allocate(m);
-//      System.out.println("");
-//      System.out.println("  --- " + n);
-//      System.out.println("0 --- " + bb.position());
-      bb.put(length.getBytes());
-//      System.out.println("1 --- " + bb.position());
-      bb.put((byte) ':');
-//      System.out.println("2 --- " + bb.position());
-      bb.put(randomUTF8ByteArray(n));
-//      System.out.println("3 --- " + bb.position());
-      bb.put((byte) ',');
-//      System.out.println("4 --- " + bb.position());
-      byte[] bs = bb.array();
-      if (!Arrays.equals(bs, Netstring.render(Netstring.parse(bs)))) {
-        System.out.println("");
-        System.out.println("Failed for bytes: " + Arrays.toString(bs));
-        System.out.println("      comparison: " + Arrays.toString(Netstring.render(Netstring.parse(bs))));
-        System.out.println("  parse as bytes: " + Arrays.toString(Netstring.parse(bs).getBytes()));
-        System.out.println("  parse as chars: " + Arrays.toString(Netstring.parse(bs).toCharArray()));
-        break;
+    {
+      int[] lengths = new int[128];
+      int RANDOM_BYTE_ARRAY_TESTS = 10000019;
+      for (int i = 0; i < RANDOM_BYTE_ARRAY_TESTS; i++) {
+        System.out.print(i + " " + (100 * i / RANDOM_BYTE_ARRAY_TESTS) + "%...\r");
+        int n = randomLength();
+        lengths[n]++;
+        String length = String.valueOf(n);
+        int m = length.length() + 1 + n + 1;
+        ByteBuffer bb = ByteBuffer.allocate(m);
+        bb.put(length.getBytes());
+        bb.put((byte) ':');
+        bb.put(randomUTF8ByteArray(n));
+        bb.put((byte) ',');
+        byte[] bs = bb.array();
+        String s = Netstring.parse(bs);
+        byte[] cs = Netstring.render(s);
+        if (!Arrays.equals(bs, cs)) {
+          System.out.println("");
+          System.out.println("     byte buffer: " + Arrays.toString(bs));
+          System.out.println("      comparison: " + Arrays.toString(cs));
+          System.out.println("  parse as bytes: " + Arrays.toString(s.getBytes()));
+          System.out.println("  parse as chars: " + Arrays.toString(s.toCharArray()));
+          break;
+        }
       }
+      System.out.println(RANDOM_BYTE_ARRAY_TESTS + " random byte array tests completed.");
+      System.out.println("  Lengths histogram: " + Arrays.toString(lengths));
     }
-    System.out.println("Random byte array tests completed.");
-    System.out.println("  Lengths histogram: " + Arrays.toString(lengths));
 
     System.out.println();
+
+    {
+      int[] distribution = byteUTF8Distribution();
+      System.out.println("UTF8 bytes distribution: " + Arrays.toString(distribution));
+      int sum = 0;
+      for (int i = 0; i < distribution.length; i++) {
+        sum += distribution[i];
+      }
+      int esum = 128 + 1920*2 + 53248*3 + 8192*3 + 1048576*4;
+      System.out.println("  sum over distribution = " + sum + " which should agree with " + esum + ".");
+    }
+    
+    System.out.println();
+
+    {
+      int[] distribution = lengthUTF8Distribution();
+      System.out.println("UTF8 bytes' length distribution: " + Arrays.toString(distribution));
+      int sum = 0;
+      for (int i = 0; i < distribution.length; i++) {
+        sum += distribution[i];
+      }
+      System.out.println("  sum over distribution = " + sum + " which should agree with " + LEGAL_CODE_POINTS + ".");
+      sum = 0;
+      for (int i = 0; i < distribution.length; i++) {
+        sum += i * distribution[i];
+      }
+      int esum = 128 + 1920*2 + 53248*3 + 8192*3 + 1048576*4;
+      System.out.println("  weighted sum over distribution = " + sum + " which should agree with " + esum + ".");
+    }
+    
+    System.out.println();
+
   }
     
   private static Random random = new Random();
@@ -139,9 +185,12 @@ public class NetstringTest {
       n = 8; d = +1;
     }
     for (; !random.nextBoolean(); n += d) {
-      if (0 >= n) {
-        return 0;
+      if (0 > n) {
+        return Byte.MAX_VALUE;
       }
+    }
+    if (0 > n) {
+      return Byte.MAX_VALUE;
     }
     return n;
   }
@@ -159,38 +208,18 @@ public class NetstringTest {
   }
   
   private static byte[] randomUTF8ByteArray(int n) {
-    byte[] bs = new byte[n];
-    byte[] ss = new byte[1];
-    random.nextBytes(bs);
-    int i = 0;
-    while (i < n) {
-      if (false) {
-      } else if (  0 <= bs[i] && bs[i] <= 127 && i < n - 0) {
-        for (int j = 1; j < 1; j++) {
-          bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
+    switch (Integer.signum(n)) {
+      case -1:
+        throw new IllegalArgumentException();
+      case 0:
+        return new byte[] {};
+      default:
+        ByteBuffer bb = ByteBuffer.allocate(n);
+        while (0 < bb.remaining()) {
+          bb.put(randomCodePointAsUTF8Bytes(Integer.min(4, bb.remaining())));
         }
-        i += 1;
-      } else if (-64 <= bs[i] && bs[i] <= -33 && i < n - 1) {
-        for (int j = 1; j < 2; j++) {
-          bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
-        }
-        i += 2;
-      } else if (-32 <= bs[i] && bs[i] <= -17 && i < n - 2) {
-        for (int j = 1; j < 3; j++) {
-          bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
-        }
-        i += 3;
-      } else if (-16 <= bs[i] && bs[i] <= -9 && i < n - 3) {
-        for (int j = 1; j < 4; j++) {
-          bs[i + j] = (byte) ((bs[i + j] & 63) | Byte.MIN_VALUE);
-        }
-        i += 4;
-      } else {
-        random.nextBytes(ss);
-        bs[i] = ss[0];
-      }
+        return bb.array();
     }
-    return bs;
   }
   
   public static final int MIN_BASIC_MULTILINGUAL_PLANE_CODE_POINT = 0x0; // 0
@@ -215,6 +244,22 @@ public class NetstringTest {
 
   public static final int LEGAL_CODE_POINTS = CODE_POINTS - SURROGATE_CODE_POINTS;  // 1,112,064
 
+  public static final int LEGAL_1BYTE_CODE_POINTS = 0x80;  // 128
+
+  public static final int LEGAL_2BYTE_CODE_POINTS = 0x800;  // 2,048
+
+  public static final int LEGAL_3BYTE_CODE_POINTS = 0x10000 - SURROGATE_CODE_POINTS;  // 63,488
+
+  public static final int LEGAL_4BYTE_CODE_POINTS = LEGAL_CODE_POINTS; // 0x110000 - SURROGATE_CODE_POINTS;  // 1,112,064
+  
+  public static final int[] LEGAL_CODE_POINTS_BY_UTF8_BYTES = new int[]{
+  0,
+  0x80,  // 128
+  0x800,  // 2,048
+  0x10000 - SURROGATE_CODE_POINTS,  // 63,488
+  0x110000 - SURROGATE_CODE_POINTS  // 1,112,064
+  };
+  
   private static int randomCodePoint() {
     int c = random.nextInt(LEGAL_CODE_POINTS);
     return (MIN_SURROGATE_CODE_POINT > c) ? c : c + SURROGATE_CODE_POINTS;
@@ -228,5 +273,87 @@ public class NetstringTest {
     return cs;
   }
   
+  private static byte[] codePointToUTF8Bytes(int a) {
+    if (MIN_CODE_POINT > a || MAX_CODE_POINT < a) {
+      throw new IllegalArgumentException(a + " outside of [" + MIN_CODE_POINT + ".." + MAX_CODE_POINT + "]");
+    }
+    if (MIN_SURROGATE_CODE_POINT <= a && MAX_SURROGATE_CODE_POINT >= a) {
+      throw new IllegalArgumentException(a + " is a surrogate code point; i.e. within [" + MIN_SURROGATE_CODE_POINT + ".." + MAX_SURROGATE_CODE_POINT + "]");
+    }
+    if (0x00 <= a && a <= 0x7f) {
+      return new byte[] {toByte(a)};
+    }
+    if (0x80 <= a && a <= 0x7ff) {
+      int b = (a & 0x3f) | 0x80;
+      a >>>= 6;
+      a |= 0xc0;
+      return new byte[] {toByte(a), toByte(b)};
+    }
+    if (0x800 <= a && a <= 0xffff) {
+      int c = (a & 0x3f) | 0x80;
+      a >>>= 6;
+      int b = (a & 0x3f) | 0x80;
+      a >>>= 6;
+      a |= 0xe0;
+      return new byte[] {toByte(a), toByte(b), toByte(c)};
+    }
+    if (0x10000 <= a && a <= 0x10ffff) {
+      int d = (a & 0x3f) | 0x80;
+      a >>>= 6;
+      int c = (a & 0x3f) | 0x80;
+      a >>>= 6;
+      int b = (a & 0x3f) | 0x80;
+      a >>>= 6;
+      a |= 0xf0;
+      return new byte[] {toByte(a), toByte(b), toByte(c), toByte(d)};
+    }
+    throw new IllegalArgumentException(a + " outside of [0x0..0x10ffff]");
+  }
+  
+  private static byte[] randomCodePointAsUTF8Bytes(int n) {
+    if (1 > n || 4 < n) {
+      throw new IllegalArgumentException(n + " outside of [1..4]");
+    }
+    int a = random.nextInt(LEGAL_CODE_POINTS_BY_UTF8_BYTES[n]);
+    a = (MIN_SURROGATE_CODE_POINT > a) ? a : a + SURROGATE_CODE_POINTS;
+    return codePointToUTF8Bytes(a);
+  }
+  
+  private static byte toByte(int i) {
+    if (0 > i || 255 < i) {
+      throw new IllegalArgumentException(i + " not in [0..255].");
+    }
+    return (byte) i;
+  }
+  
+  private static int[] byteUTF8Distribution() {
+    int[] counts = new int[256];
+    for (int i = 0; i < MIN_SURROGATE_CODE_POINT; i++) {
+      byte[] bs = codePointToUTF8Bytes(i);
+      for (int j = 0; j < bs.length; j++) {
+        counts[(bs[j] + 0x100) & 0xff]++;
+      }
+    }
+    for (int i = MAX_SURROGATE_CODE_POINT + 1; i < CODE_POINTS; i++) {
+      byte[] bs = codePointToUTF8Bytes(i);
+      for (int j = 0; j < bs.length; j++) {
+        counts[(bs[j] + 0x100) & 0xff]++;
+      }
+    }
+    return counts;
+  }
+  
+  private static int[] lengthUTF8Distribution() {
+    int[] counts = new int[5];
+    for (int i = 0; i < MIN_SURROGATE_CODE_POINT; i++) {
+      byte[] bs = codePointToUTF8Bytes(i);
+      counts[bs.length]++;
+    }
+    for (int i = MAX_SURROGATE_CODE_POINT + 1; i < CODE_POINTS; i++) {
+      byte[] bs = codePointToUTF8Bytes(i);
+      counts[bs.length]++;
+    }
+    return counts;
+  }
   
 }

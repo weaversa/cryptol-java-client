@@ -1,10 +1,10 @@
 package na.na.na.cryptol;
 
-public class WordAsBinaryString {
+public class BinaryString {
   
   private String wabs;
   
-  private WordAsBinaryString(String s) {
+  private BinaryString(String s) {
     for (int i = 0; i < s.length(); i++) {
       switch (s.charAt(i)) {
         case '0':
@@ -17,15 +17,15 @@ public class WordAsBinaryString {
     wabs = s;
   }
 
-  public static WordAsBinaryString valueOf(String s) {
-    return new WordAsBinaryString(s);
+  public static BinaryString valueOf(String s) {
+    return new BinaryString(s);
   }
   
   public String toString() {
     return wabs;
   }
   
-  public int Size() {
+  public int size() {
     return wabs.length();
   }
   

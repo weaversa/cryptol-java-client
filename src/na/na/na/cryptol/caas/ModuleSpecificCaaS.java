@@ -9,8 +9,8 @@ public class ModuleSpecificCaaS {
   private String module;
   private PrimitiveCaaS caas;
   
-  private static int CALL_ATTEMPTS = 3;
-  private static long ATTEMPT_DELAY_ms = 2000;
+  private static int CALL_ATTEMPTS = 100;
+  private static long ATTEMPT_DELAY_ms = 3000;
   
   public static ModuleSpecificCaaS SUITE_B;
   static {
@@ -67,8 +67,8 @@ public class ModuleSpecificCaaS {
     for (Object in: ins) {
       if (in instanceof CryptolValue) {
         args.put(((CryptolValue) in).getJSONForArgument());
-      } else if (in instanceof WordAsBinaryString) {
-        CryptolValue cv = new CryptolValue(((WordAsBinaryString) in).toString(), 2);
+      } else if (in instanceof BinaryString) {
+        CryptolValue cv = new CryptolValue(((BinaryString) in).toString(), 2);
         args.put(cv.getJSONForArgument());
       } else {
         throw new CaaSException("Invalid argument class in function call: " + ins.getClass().getName());
@@ -77,8 +77,8 @@ public class ModuleSpecificCaaS {
     return new CryptolValue(caas.call(f, args));
   }
   
-  public WordAsBinaryString invoke(String f, Object[] ins) throws CaaSException {
-    return WordAsBinaryString.valueOf(call(f, ins).toBinString());
+  public BinaryString invoke(String f, Object[] ins) throws CaaSException {
+    return BinaryString.valueOf(call(f, ins).toBinString());
   }
   
   public CryptolValue call(String f) throws CaaSException {
@@ -105,47 +105,47 @@ public class ModuleSpecificCaaS {
     return call(f, new Object[]{in0, in1, in2, in3, in4});
   }
   
-  public WordAsBinaryString invoke(String f) throws CaaSException {
+  public BinaryString invoke(String f) throws CaaSException {
     return invoke(f, new Object[]{});
   }
   
-  public WordAsBinaryString invoke(String f, Object in0) throws CaaSException {
+  public BinaryString invoke(String f, Object in0) throws CaaSException {
     return invoke(f, new Object[]{in0});
   }
   
-  public WordAsBinaryString invoke(String f, Object in0, Object in1) throws CaaSException {
+  public BinaryString invoke(String f, Object in0, Object in1) throws CaaSException {
     return invoke(f, new Object[]{in0, in1});
   }
   
-  public WordAsBinaryString invoke(String f, Object in0, Object in1, Object in2) throws CaaSException {
+  public BinaryString invoke(String f, Object in0, Object in1, Object in2) throws CaaSException {
     return invoke(f, new Object[]{in0, in1, in2});
   }
   
-  public WordAsBinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3) throws CaaSException {
+  public BinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3) throws CaaSException {
     return invoke(f, new Object[]{in0, in1, in2, in3});
   }
   
-  public WordAsBinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4) throws CaaSException {
+  public BinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4) throws CaaSException {
     return invoke(f, new Object[]{in0, in1, in2, in3, in4});
   }
   
-  public WordAsBinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4, Object in5) throws CaaSException {
+  public BinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4, Object in5) throws CaaSException {
     return invoke(f, new Object[]{in0, in1, in2, in3, in4, in5});
   }
   
-  public WordAsBinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4, Object in5, Object in6) throws CaaSException {
+  public BinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4, Object in5, Object in6) throws CaaSException {
     return invoke(f, new Object[]{in0, in1, in2, in3, in4, in5, in6});
   }
   
-  public WordAsBinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4, Object in5, Object in6, Object in7) throws CaaSException {
+  public BinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4, Object in5, Object in6, Object in7) throws CaaSException {
     return invoke(f, new Object[]{in0, in1, in2, in3, in4, in5, in6, in7});
   }
   
-  public WordAsBinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4, Object in5, Object in6, Object in7, Object in8) throws CaaSException {
+  public BinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4, Object in5, Object in6, Object in7, Object in8) throws CaaSException {
     return invoke(f, new Object[]{in0, in1, in2, in3, in4, in5, in6, in7, in8});
   }
   
-  public WordAsBinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4, Object in5, Object in6, Object in7, Object in8, Object in9) throws CaaSException {
+  public BinaryString invoke(String f, Object in0, Object in1, Object in2, Object in3, Object in4, Object in5, Object in6, Object in7, Object in8, Object in9) throws CaaSException {
     return invoke(f, new Object[]{in0, in1, in2, in3, in4, in5, in6, in7, in8, in9});
   }
   

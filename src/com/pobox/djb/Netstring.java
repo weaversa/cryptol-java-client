@@ -103,8 +103,8 @@ public class Netstring {
       s = new String(dataOctets, charset);
     } catch (NetstringException e) {
       throw e;
-    } catch (Exception e) {
-      throw new NetstringException(e);
+    } catch (java.io.IOException e) {
+      throw new NetstringException("Troublesome I/O in netstring parse.", e);
     }
     return s;
   }
@@ -123,7 +123,7 @@ public class Netstring {
     if (0 == in.available()) {
       return s;
     } else {
-      throw new NetstringException("Bytes remaining after parse.");
+      throw new NetstringException("Bytes remaining after netstring parse.");
     }
   }
   

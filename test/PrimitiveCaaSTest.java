@@ -66,8 +66,8 @@ SHA224("The quick brown fox jumps over the lazy dog.") ~~>
     System.out.println(caas.evaluateExpression("(2 : Z 3) + 2").toString());
     System.out.println("");
 
-    System.out.println("Evaluating `~zero : [2][3]'...");
-    System.out.println(caas.evaluateExpression("~zero : [2][3]").toString());
+    System.out.println("Evaluating `~zero : [2][5]'...");
+    System.out.println(caas.evaluateExpression("~zero : [2][5]").toString());
     System.out.println("");
 
     System.out.println("Evaluating `(2, 3, 5) : ([2], [2], [3])'...");
