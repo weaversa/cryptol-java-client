@@ -15,6 +15,8 @@ JAVA = java $(CLASSPATH) $(SYSPROPS)
 
 
 default:
+	$(JAVAC) CryptolSequenceTest.java
+	$(JAVA) CryptolSequenceTest.java
 	$(JAVAC) sha224.java
 	$(JAVA) sha224
 	$(JAVAC) ModuleSpecificCaaSTest.java
