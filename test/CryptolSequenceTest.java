@@ -1,4 +1,4 @@
-import na.na.na.cryptol.BinaryString;
+import na.na.na.BinaryString;
 import na.na.na.cryptol.CryptolValue;
 import na.na.na.cryptol.caas.CaaSException;
 import na.na.na.cryptol.caas.ModuleSpecificCaaS;

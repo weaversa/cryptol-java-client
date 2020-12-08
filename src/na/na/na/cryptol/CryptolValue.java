@@ -2,6 +2,7 @@ package na.na.na.cryptol;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import na.na.na.BinaryString;
 import static na.na.na.cryptol.CryptolType.*;
 import org.json.JSONArray;
 import org.json.JSONException;

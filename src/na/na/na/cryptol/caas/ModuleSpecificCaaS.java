@@ -1,5 +1,6 @@
 package na.na.na.cryptol.caas;
 
+import na.na.na.BinaryString;
 import na.na.na.cryptol.*;
 import org.json.JSONArray;
 
