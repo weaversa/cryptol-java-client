@@ -16,7 +16,6 @@ import org.json.JSONObject;
 
 public class PrimitiveCaaS {
   private String hostOrIP;
-//  private InetAddress inetAddress;
   private int port;
   private Socket socket;
   private BufferedInputStream in;
@@ -34,19 +33,7 @@ public class PrimitiveCaaS {
     this.hostOrIP = hostOrIP;
     this.port = port;
     reconnect();
-//    this(getByName(hostOrIP), hostOrIP, port);
   }
-  
-//  public PrimitiveCaaS(InetAddress inetAddress, String hostOrIP, int port) throws CaaSException {
-//    this.inetAddress = inetAddress;
-//    this.hostOrIP = hostOrIP;
-//    this.port = port;
-//    reconnect();
-//  }
-  
-//  public PrimitiveCaaS(InetAddress inetAddress, int port) throws CaaSException {
-//    this(inetAddress, null, port);
-//  }
   
   public static String defaultHostOrIP() {
     try {
@@ -63,18 +50,6 @@ public class PrimitiveCaaS {
       return null;
     }
   }
-  
-//  private static InetAddress getByName(String hostOrIP) throws CaaSException {
-//    try {
-//      return InetAddress.getByName(hostOrIP);
-//    } catch (Throwable t) {
-//      throw new CaaSException("Trouble converting `" + hostOrIP + "' to InetAddress.", t);
-//    }
-//  }
-//
-//  public InetAddress getInetAddress() {
-//    return inetAddress;
-//  }
   
   public String getHostOrIP() {
     return hostOrIP;

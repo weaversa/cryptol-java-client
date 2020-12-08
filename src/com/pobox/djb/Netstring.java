@@ -2,6 +2,8 @@ package com.pobox.djb;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 /**
@@ -26,31 +28,17 @@ public class Netstring {
       }
       netstring[lengthLength + 1 + dataLength] = ',';
       return netstring;
-    } catch (NetstringException e) {
-      throw e;
-    } catch (Exception e) {
+    } catch (UnsupportedEncodingException e) {
       throw new NetstringException(e);
     }
   }
   
   public static byte[] render(CharSequence s, String charsetName) {
-    try {
-      return render(s, Charset.forName(charsetName));
-    } catch (NetstringException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new NetstringException(e);
-    }
+    return render(s, Charset.forName(charsetName));
   }
   
   public static byte[] render(CharSequence s) {
-    try {
-      return render(s, Charset.defaultCharset());
-    } catch (NetstringException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new NetstringException(e);
-    }
+    return render(s, Charset.defaultCharset());
   }
   
   public static String parse(InputStream in, Charset charset) {
@@ -101,9 +89,7 @@ public class Netstring {
         throw new NetstringException("Netstring data not terminate with comma.");
       }
       s = new String(dataOctets, charset);
-    } catch (NetstringException e) {
-      throw e;
-    } catch (java.io.IOException e) {
+    } catch (IOException e) {
       throw new NetstringException("Troublesome I/O in netstring parse.", e);
     }
     return s;

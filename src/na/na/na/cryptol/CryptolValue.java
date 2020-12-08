@@ -60,7 +60,7 @@ public class CryptolValue {
     size = bits;
     calculateModulus();
     type = CryptolType.WORD;
-    bigInt = new BigInteger(digits, radix);
+    bigInt = new BigInteger((digits.isEmpty()) ? "0" : digits, radix);
     if (0 > size) {
       throw new IllegalArgumentException();
     }
