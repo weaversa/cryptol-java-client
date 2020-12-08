@@ -5,7 +5,7 @@ HOST = localhost
 
 PORT = 65519
 
-CLASSPATH = -cp ../lib/caas-etc.jar:.
+CLASSPATH = -cp ../lib/caas-etc.jar:../lib/binarystring.jar:.
 
 SYSPROPS = -Dna.na.na.cryptol.caas.hostOrIP=$(HOST) -Dna.na.na.cryptol.caas.port=$(PORT)
 
