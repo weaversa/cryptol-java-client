@@ -9,7 +9,9 @@ CLASSPATH = -cp ../lib/caas-etc.jar:.
 
 SYSPROPS = -Dna.na.na.cryptol.caas.hostOrIP=$(HOST) -Dna.na.na.cryptol.caas.port=$(PORT)
 
-JAVAC = javac $(CLASSPATH) -Werror
+JAVAC = javac $(CLASSPATH) -Werror -deprecation -source 1.6 -target 1.6
+
+JAVAC = javac $(CLASSPATH) -Werror -deprecation
 
 JAVA = java $(CLASSPATH) $(SYSPROPS)
 

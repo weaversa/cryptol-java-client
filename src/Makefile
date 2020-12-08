@@ -1,13 +1,15 @@
-JAVAC = javac -Werror
+JAVAC = javac -Werror -deprecation -source 1.6 -target 1.6
 
-CASSETCJAR = ../lib/caas-etc.jar
+JAVAC = javac -Werror -deprecation
+
+CAASETCJAR = ../lib/caas-etc.jar
 
 default:
 	find . -type f -name '*.java' | xargs $(JAVAC)
-	find . -name '*.class' | xargs jar cf $(CASSETCJAR)  
+	find . -name '*.class' | xargs jar cf $(CAASETCJAR)  
 
 clean:
-	rm -f $(CASSETCJAR)
+	rm -f $(CAASETCJAR)
 	find . -name '*.class' -execdir rm -- {} \;
 
 
