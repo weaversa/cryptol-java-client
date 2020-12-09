@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 /**
@@ -17,17 +18,9 @@ public class Netstring {
       byte[] dataOctets = s.toString().getBytes(charset);
       int dataLength = dataOctets.length;
       byte[] lengthOctets = Integer.toString(dataLength).getBytes("US-ASCII");
-      int lengthLength = lengthOctets.length;
-      byte[] netstring = new byte[lengthLength + 1 + dataLength + 1];
-      for (int i = 0; i < lengthLength; i++) {
-        netstring[i] = lengthOctets[i];
-      }
-      netstring[lengthLength] = ':';
-      for (int i = 0; i < dataLength; i++) {
-        netstring[lengthLength + 1 + i] = dataOctets[i];
-      }
-      netstring[lengthLength + 1 + dataLength] = ',';
-      return netstring;
+      ByteBuffer bb = ByteBuffer.allocate(lengthOctets.length + 1 + dataLength + 1);
+      bb.put(lengthOctets).put((byte) ':').put(dataOctets).put((byte) ',');
+      return bb.array();
     } catch (UnsupportedEncodingException e) {
       throw new NetstringException(e);
     }
