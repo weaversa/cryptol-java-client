@@ -3,7 +3,7 @@ package na.na.na.cryptol.caas;
 import com.pobox.djb.Netstring;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.net.InetAddress;
+import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
@@ -100,75 +100,35 @@ public class PrimitiveCaaS {
       id = random.nextInt();
       cryptolInput.put("id", id);
       byte[] netstring = Netstring.render(cryptolInput.toString(), "UTF-8");
-//      System.out.println(">>>>> " + cryptolInput.toString());
       out.write(netstring, 0, netstring.length);
       out.flush();
-      //    } catch (CaaSException e) {
-      //      throw e;
-    } catch (Exception e) {
+    } catch (IOException e) {
       throw new CaaSException("Trouble sending to CaaS.", e);
     }
     JSONObject cryptolOutput = null;
-    try {
-      cryptolOutput = new JSONObject(Netstring.parse(in, "UTF-8"));
-//      System.out.println("<<<<< " + cryptolOutput.toString());
-      if (cryptolOutput.getInt("id") != id) {
-        throw new CaaSException("Incorrect id in response from CaaS.");
-      }
+    cryptolOutput = new JSONObject(Netstring.parse(in, "UTF-8"));
+    if (cryptolOutput.getInt("id") != id) {
+      throw new CaaSException("Incorrect id in response from CaaS.");
+    }
+    if (cryptolOutput.has("result")) {
       JSONObject result = cryptolOutput.getJSONObject("result");
       String newState = result.getString("state");
       if (states.empty() || states.peek() != newState) {
         states.push(newState);
       }
       return cryptolOutput;
-    } catch (CaaSException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new CaaSException("Trouble receiving from CaaS." + ((null == cryptolOutput) ? "" : ("JSON: " +  cryptolOutput.toString())), e);
     }
+    if (cryptolOutput.has("error")) {
+      JSONObject error = cryptolOutput.getJSONObject("error");
+      int code = error.getInt("code");
+      String message = error.getString("message");
+      System.err.println("***** Cryptol error "+ code + ": " + message);
+      throw new CaaSException("Cryptol error "+ code + ": " + message);
+    }
+    System.err.println("***** Cryptol returned neither a result nor an error.");
+    System.err.println(cryptolOutput);
+    throw new CaaSException("Cryptol returned neither a result nor an error.");
   }
-  
-  //  private void send(JSONObject message) throws CaaSException {
-  //    try {
-  //      message.putOnce("jsonrpc", "2.0");
-  //      if (!message.has("params")) {
-  //        message.putOnce("params", new JSONObject());
-  //      }
-  //      JSONObject params = message.getJSONObject("params");
-  //      if (states.empty() || null == states.peek()) {
-  //        params.put("state", JSONObject.NULL);
-  //      } else {
-  //        params.put("state", states.peek());
-  //      }
-  //      id = random.nextInt();
-  //      message.put("id", id);
-  //      byte[] netstring = Netstring.render(message.toString(), "UTF-8");
-  //      out.write(netstring, 0, netstring.length);
-  //      out.flush();
-  //    } catch (Exception e) {
-  //      throw new CaaSException("Trouble sending to CaaS.", e);
-  //    }
-  //  }
-  //
-  //  private JSONObject receive() throws CaaSException {
-  //    JSONObject jsonObject = null;
-  //    try {
-  //      jsonObject = new JSONObject(Netstring.parse(in, "UTF-8"));
-  //      if (id != jsonObject.getInt("id")) {
-  //        throw new CaaSException("Incorrect id in response from CaaS.");
-  //      }
-  //      JSONObject result = jsonObject.getJSONObject("result");
-  //      String newState = result.getString("state");
-  //      if (states.empty() || states.peek() != newState) {
-  //        states.push(newState);
-  //      }
-  //      return result;
-  //    } catch (CaaSException e) {
-  //      throw e;
-  //    } catch (Exception e) {
-  //      throw new CaaSException("Trouble receiving from CaaS." + ((null == jsonObject) ? "" : ("JSON: " +  jsonObject.toString())), e);
-  //    }
-  //  }
   
   public JSONObject evaluateExpression(JSONObject expression) throws CaaSException {
     JSONObject message = new JSONObject();
@@ -274,7 +234,6 @@ public class PrimitiveCaaS {
   //  }
   
   public static JSONObject fromHex(String hex, int numBits) {
-    // System.out.println("*** " + hex + " " + numBits);
     JSONObject jhex = new JSONObject();
     jhex.put("expression", "bits");
     jhex.put("encoding", "hex");

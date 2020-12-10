@@ -4,6 +4,9 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Random;
 
+// Explicitly using "UTF-8" as the charset is a necessity on Windows where the default CharSet is not (as of this writing) UTF-8.
+
+
 public class NetstringTest {
   
   /* These examples are from:
@@ -26,7 +29,7 @@ public class NetstringTest {
 
     {
       byte[] emptyNetstring = new byte[] {0x30, 0x3a, 0x2c};
-      System.out.println("Checking emptyNetstring rendering/parsing: " + Arrays.equals(emptyNetstring, Netstring.render("")) + " && " + "".equals(Netstring.parse(emptyNetstring)));
+      System.out.println("Checking emptyNetstring rendering/parsing: " + Arrays.equals(emptyNetstring, Netstring.render("", "UTF-8")) + " && " + "".equals(Netstring.parse(emptyNetstring, "UTF-8")));
     }
     
     System.out.println();
@@ -34,7 +37,7 @@ public class NetstringTest {
     {
       String helloWorld = "hello world!";
       byte[] helloWorldNetstring = new byte[] {0x31, 0x32, 0x3a, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x21, 0x2c};
-      System.out.println("Checking helloWorldNetstring rendering/parsing: " + Arrays.equals(helloWorldNetstring, Netstring.render(helloWorld)) + " && " + helloWorld.equals(Netstring.parse(helloWorldNetstring)));
+      System.out.println("Checking helloWorldNetstring rendering/parsing: " + Arrays.equals(helloWorldNetstring, Netstring.render(helloWorld, "UTF-8")) + " && " + helloWorld.equals(Netstring.parse(helloWorldNetstring, "UTF-8")));
     }
     
     System.out.println();
@@ -44,7 +47,7 @@ public class NetstringTest {
       for (int i = MIN_CODE_POINT; i <= MAX_CODE_POINT; i++) {
         System.out.print(i + " " + (100 * i) / CODE_POINTS + "%...\r");
         String s = new String(new int[] {i}, 0, 1);
-        byte[] bs = Netstring.render(s);
+        byte[] bs = Netstring.render(s, "UTF-8");
         if (MIN_SURROGATE_CODE_POINT <= i && i <= MAX_SURROGATE_CODE_POINT) {
           if (!Arrays.equals(bs, questionableNetstring)) {
             System.out.println("Surrogate code point behaved unexpectedly: " + i );
@@ -62,13 +65,13 @@ public class NetstringTest {
           } else {
             System.out.println("Code point " + i + " untested for string conversion length.");
           }
-          if (!s.equals(Netstring.parse(bs))) {
+          if (!s.equals(Netstring.parse(bs, "UTF-8"))) {
             System.out.println("Netstring.parse failed for codepoint: " + i );
             System.out.println("  s.codePointAt(0): " + s.codePointAt(0));
             System.out.println("  Corresponding string, \"" + s + "\", has length " + s.length());
             System.out.println("  Rendered netstring: " + Arrays.toString(bs));
           }
-          if (!Arrays.equals(bs, Netstring.render(s))) {
+          if (!Arrays.equals(bs, Netstring.render(s, "UTF-8"))) {
             System.out.println("Netstring.render failed for codepoint: " + i );
             System.out.println("  s.codePointAt(0): " + s.codePointAt(0));
             System.out.println("  Corresponding string, \"" + s + "\", has length " + s.length());
@@ -100,7 +103,7 @@ public class NetstringTest {
         lengths[n]++;
         int[] cs = randomCodePoints(n);
         String s = new String(cs, 0, cs.length);
-        if (!s.equals(Netstring.parse(Netstring.render(s)))) {
+        if (!s.equals(Netstring.parse(Netstring.render(s, "UTF-8"), "UTF-8"))) {
           System.out.println("Failed for codepoints: " + Arrays.toString(cs));
         }
       }
@@ -125,8 +128,8 @@ public class NetstringTest {
         bb.put(randomUTF8ByteArray(n));
         bb.put((byte) ',');
         byte[] bs = bb.array();
-        String s = Netstring.parse(bs);
-        byte[] cs = Netstring.render(s);
+        String s = Netstring.parse(bs, "UTF-8");
+        byte[] cs = Netstring.render(s, "UTF-8");
         if (!Arrays.equals(bs, cs)) {
           System.out.println("");
           System.out.println("     byte buffer: " + Arrays.toString(bs));

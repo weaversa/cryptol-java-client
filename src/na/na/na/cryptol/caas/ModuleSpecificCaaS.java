@@ -14,16 +14,14 @@ public class ModuleSpecificCaaS {
   private static int CALL_ATTEMPTS = 100;
   private static long ATTEMPT_DELAY_ms = 3000;
   
+  public static ModuleSpecificCaaS CHEESE = new ModuleSpecificCaaS("Gouda");
+  
   public static ModuleSpecificCaaS SUITE_B = new ModuleSpecificCaaS("SuiteB");
   
   public ModuleSpecificCaaS(String hostOrIP, int port, String module) {
     this.hostOrIP = hostOrIP;
     this.port = port;
     this.module = module;
-//    System.out.println("***** Declared a Cryptol module.");
-//    System.out.println("*****   hostOrIP: `" + hostOrIP + "'");
-//    System.out.println("*****       port: `" + port + "'");
-//    System.out.println("*****     module: `" + module + "'");
   }
   
   public ModuleSpecificCaaS(String module) {
@@ -54,6 +52,9 @@ public class ModuleSpecificCaaS {
     Exception[] es = new Exception[CALL_ATTEMPTS];
     for (int i = 0; i < CALL_ATTEMPTS; i++) {
       try {
+        if ((0 < i) && (0 == (i & (i - 1)))) {
+          System.err.println("***** Retry " + i + " of call " + calls + " to `" + module + "' via CaaS. [Only powers of 2 reported.]");
+        }
         return new CryptolValue(caas.call(f, args));
       } catch (CaaSException e) {
         try {
