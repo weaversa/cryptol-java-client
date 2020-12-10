@@ -30,10 +30,16 @@ public class ModuleSpecificCaaS {
   
   private void restartCaaS() throws CaaSException {
     System.err.println("***** Connecting to CaaS...");
-    if (null == hostOrIP) {
-      caas = new PrimitiveCaaS();
-    } else {
-      caas = new PrimitiveCaaS(hostOrIP, port);
+    try {
+      if (null == hostOrIP) {
+        caas = new PrimitiveCaaS();
+      } else {
+        caas = new PrimitiveCaaS(hostOrIP, port);
+      }
+    } catch (CaaSException e) {
+      throw e;
+    } catch (Throwable t) {
+      throw new CaaSException("Trouble connecting to CaaS.", t);
     }
     System.err.println("***** Connected to CaaS: " + caas.getHostOrIP() + ":" + caas.getPort());
     System.err.println("***** Loading module `" + module + "'...");
@@ -46,14 +52,14 @@ public class ModuleSpecificCaaS {
     if (0 == (calls & (calls - 1))) {
       System.err.println("***** Call " + calls + " to `" + module + "' via CaaS. [Only powers of 2 reported.]");
     }
-    if (1 == calls) {
-      restartCaaS();
-    }
     Exception[] es = new Exception[CALL_ATTEMPTS];
     for (int i = 0; i < CALL_ATTEMPTS; i++) {
       try {
         if ((0 < i) && (0 == (i & (i - 1)))) {
           System.err.println("***** Retry " + i + " of call " + calls + " to `" + module + "' via CaaS. [Only powers of 2 reported.]");
+        }
+        if (1 == calls) {
+          restartCaaS();
         }
         return new CryptolValue(caas.call(f, args));
       } catch (CaaSException e) {
@@ -63,7 +69,10 @@ public class ModuleSpecificCaaS {
           throw new CaaSException(ie);
         }
         es[i] = e;
-        restartCaaS();
+        try {
+          restartCaaS();
+        } catch (Throwable t) {
+        }
       }
     }
     throw new CaaSException("callFunction `" + f + "' failed after " + CALL_ATTEMPTS + "attempt(s). Stack traces for all attempts displayed as one. Read carefully!", es);

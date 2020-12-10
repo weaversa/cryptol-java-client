@@ -20,7 +20,7 @@ public class PrimitiveCaaS {
   private Socket socket;
   private BufferedInputStream in;
   private BufferedOutputStream out;
-  private Stack<String> states = new Stack<String>(); // states in never null
+  private Stack<String> states = new Stack<String>(); // states is never null
   private int id;
   private String latestModule;
   private Random random = new Random();
@@ -64,12 +64,13 @@ public class PrimitiveCaaS {
       socket = new Socket(hostOrIP, port);
       in = new BufferedInputStream(socket.getInputStream());
       out = new BufferedOutputStream(socket.getOutputStream());
+      resetState();
+      loadModule("Cryptol");
+    } catch (CaaSException e) {
+      throw e;
+    } catch (Throwable t) {
+      throw new CaaSException ("Troublesome connection to CaaS, hosrOrIP: `" + hostOrIP + "', port: `" + port + "'.", t);
     }
-    catch (Exception e) {
-      throw new CaaSException ("Troublesome connection to CaaS, hosrOrIP: `" + hostOrIP + "', port: `" + port + "'.", e);
-    }
-    resetState();
-    loadModule("Cryptol");
   }
   
   private void disconnect() {
@@ -86,7 +87,7 @@ public class PrimitiveCaaS {
   // do we want non-blocking IO?
   
   private JSONObject transceive(JSONObject cryptolInput) throws CaaSException {
-    try {
+    try { // send
       cryptolInput.putOnce("jsonrpc", "2.0");
       if (!cryptolInput.has("params")) {
         cryptolInput.putOnce("params", new JSONObject());
@@ -102,32 +103,46 @@ public class PrimitiveCaaS {
       byte[] netstring = Netstring.render(cryptolInput.toString(), "UTF-8");
       out.write(netstring, 0, netstring.length);
       out.flush();
-    } catch (IOException e) {
-      throw new CaaSException("Trouble sending to CaaS.", e);
+    } catch (Throwable t) {
+      throw new CaaSException("Trouble sending to CaaS.", t);
     }
-    JSONObject cryptolOutput = null;
-    cryptolOutput = new JSONObject(Netstring.parse(in, "UTF-8"));
-    if (cryptolOutput.getInt("id") != id) {
-      throw new CaaSException("Incorrect id in response from CaaS.");
-    }
-    if (cryptolOutput.has("result")) {
-      JSONObject result = cryptolOutput.getJSONObject("result");
-      String newState = result.getString("state");
-      if (states.empty() || states.peek() != newState) {
-        states.push(newState);
+    try {
+      JSONObject cryptolOutput = new JSONObject(Netstring.parse(in, "UTF-8"));
+      if (cryptolOutput.getInt("id") != id) {
+        throw new CaaSException("Incorrect id in response from CaaS.");
       }
-      return cryptolOutput;
+      if (cryptolOutput.has("result")) {
+        JSONObject result = cryptolOutput.getJSONObject("result");
+        String newState = result.getString("state");
+        if (states.empty() || states.peek() != newState) {
+          states.push(newState);
+        }
+        return cryptolOutput;
+      }
+      if (cryptolOutput.has("error")) {
+        JSONObject error = cryptolOutput.getJSONObject("error");
+        int code = error.getInt("code");
+        String message = error.getString("message");
+        System.err.println();
+        System.err.println("*****************************");
+        System.err.println("Cryptol returned error code " + code + " and the following error message:");
+        System.err.println(message);
+        System.err.println("*****************************");
+        System.err.println();
+        throw new CaaSException("Cryptol error " + code + ": " + message);
+      }
+      System.err.println();
+      System.err.println("*****************************");
+      System.err.println("Cryptol returned neither a result nor an error. JSON follows:");
+      System.err.println(cryptolOutput);
+      System.err.println("*****************************");
+      System.err.println();
+      throw new CaaSException("Cryptol returned neither a result nor an error. JSON: " + cryptolOutput);
+    } catch (CaaSException e) {
+      throw e;
+    } catch (Throwable t) {
+      throw new CaaSException("Trouble receiving from CaaS.", t);
     }
-    if (cryptolOutput.has("error")) {
-      JSONObject error = cryptolOutput.getJSONObject("error");
-      int code = error.getInt("code");
-      String message = error.getString("message");
-      System.err.println("***** Cryptol error "+ code + ": " + message);
-      throw new CaaSException("Cryptol error "+ code + ": " + message);
-    }
-    System.err.println("***** Cryptol returned neither a result nor an error.");
-    System.err.println(cryptolOutput);
-    throw new CaaSException("Cryptol returned neither a result nor an error.");
   }
   
   public JSONObject evaluateExpression(JSONObject expression) throws CaaSException {
@@ -172,8 +187,10 @@ public class PrimitiveCaaS {
     if (latestModule != moduleName) {
       try {
         JSONObject result = loadModuleJSON(moduleName);
-      } catch (Exception e) {
-        throw new CaaSException("Could not load module `" + moduleName + "'", e);
+      } catch (CaaSException e) {
+        throw e;
+      } catch (Throwable t) {
+        throw new CaaSException("Trouble loading module `" + moduleName + "'.", t);
       }
     }
   }
@@ -199,40 +216,7 @@ public class PrimitiveCaaS {
     return transceive(message);
   }
   
-  //  public JSONArray addArgument(JSONArray arguments, JSONObject argument) {
-  //    if (null == arguments) {
-  //      arguments = new JSONArray();
-  //    }
-  //    arguments.put(argument);
-  //    return arguments;
-  //  }
-  //
-  //  public JSONArray addArgument(JSONArray arguments, String argument, int numBits) {
-  //    return addArgument(arguments, fromHex(argument, numBits));
-  //  }
-  //
-  //  public JSONObject addToTuple(JSONObject tuple, JSONObject value) throws CaaSException {
-  //    JSONArray data;
-  //    if (null == tuple) {
-  //      tuple = new JSONObject();
-  //      tuple.put("expression", "tuple");
-  //      data = new JSONArray();
-  //      tuple.put("data", data);
-  //    } else {
-  //      try {
-  //        data = tuple.getJSONArray("data");
-  //      } catch (JSONException e) {
-  //        throw new CaaSException("Problem with `data' tag", e);
-  //      }
-  //    }
-  //    data.put(value);
-  //    return tuple;
-  //  }
-  //
-  //  public JSONObject addToTuple(JSONObject tuple, String value, int numBits) throws CaaSException {
-  //    return addToTuple(tuple, fromHex(value, numBits));
-  //  }
-  
+    
   public static JSONObject fromHex(String hex, int numBits) {
     JSONObject jhex = new JSONObject();
     jhex.put("expression", "bits");

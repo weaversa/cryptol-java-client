@@ -17,8 +17,10 @@ JAVA = java $(CLASSPATH) $(SYSPROPS)
 
 
 default:
+	$(JAVAC) Hammer.java
+	$(JAVA) Hammer
 	$(JAVAC) CryptolSequenceTest.java
-	$(JAVA) CryptolSequenceTest.java
+	$(JAVA) CryptolSequenceTest
 	$(JAVAC) sha224.java
 	$(JAVA) sha224
 	$(JAVAC) ModuleSpecificCaaSTest.java
@@ -32,7 +34,7 @@ clean:
 
 server:
 	killall -v cryptol-remote-api || true
-	~/unix-roots/cryptol-2.9.1.99-2020-10-20/bin/cryptol-remote-api --port $(PORT) --public &
+	../server/macOS/cryptol-remote-api socket --host 0.0.0.0 --port $(PORT) &
 
 netstring:
 	$(JAVAC) NetstringTest.java

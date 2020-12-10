@@ -2,6 +2,7 @@ package na.na.na.cryptol;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Random;
 import na.na.na.BinaryString;
 import static na.na.na.cryptol.CryptolType.*;
 import org.json.JSONArray;
@@ -88,6 +89,19 @@ public class CryptolValue {
     type = RESIDUE;
     bigInt = big;
     toJSON();
+  }
+
+  public CryptolValue(int bits, BigInteger big) {
+    size = bits;
+    calculateModulus();
+    type = WORD;
+    bigInt = big;
+    checkValue();
+    toJSON();
+  }
+
+  public CryptolValue(int bits, Random random) {
+    this(bits, new BigInteger(bits, random));
   }
 
   public CryptolValue(boolean bool) {
