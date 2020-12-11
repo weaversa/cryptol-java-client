@@ -48,11 +48,21 @@ public class CryptolValue {
   
   private JSONObject json;
   private CryptolType type;
+  
+  // for Cryptol type `Bit`
   private boolean bit;
+  
+  // for Cryptol types `[n]`, `Z n` and `Integer`
   private BigInteger bigInt;
-  private BigInteger modulus; // n for Z n or 2^n for [n] or 0 for Integer or null for other types
+  private BigInteger modulus; // n for Z n or 2^n for [n] or 0 for Integer
   private int size; // n for [n] so we're disallowing [n] where n > Integer.MAX_VALUE == 2^^31 - 1
+  
+  // for Cryptol types `[n]a` where `a` is not `Bit`
   private CryptolValue[] sequence;
+  
+  // for errors returned from Cryptol
+  private int errorCode;
+  private String errorMessage;
 
   public CryptolValue(JSONObject jsonObject) {
     json = jsonObject;
@@ -64,13 +74,10 @@ public class CryptolValue {
     type = CryptolType.WORD;
     bigInt = new BigInteger((digits.isEmpty()) ? "0" : digits, radix);
     if (0 > size) {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException("Number of bits must be nonnegative.");
     }
-    if (0 > bigInt.signum()) {
-      throw new IllegalArgumentException();
-    }
-    if (bigInt.compareTo(modulus) >= 0) {
-      throw new IllegalArgumentException();
+    if ((0 > bigInt.signum()) || (bigInt.compareTo(modulus) >= 0)) {
+      throw new IllegalArgumentException("Number must be a proper residue.");
     }
     toJSON();
   }
@@ -115,7 +122,7 @@ public class CryptolValue {
     if (null == cvs) {
       sequence = new CryptolValue[] {};
     } else {
-      sequence = Arrays.copyOf(cvs, cvs.length); // (CryptolValue[])
+      sequence = Arrays.copyOf(cvs, cvs.length);
     }
     toJSON();
   }
@@ -274,6 +281,13 @@ public class CryptolValue {
   }
 
   private void fromJSON() {
+    if (json.has("error")) {
+      JSONObject error = json.getJSONObject("error");
+      errorCode = error.getInt("code");
+      errorMessage = error.getString("message");
+      type = ERROR;
+      return;
+    }
     JSONObject jsonObject = getJSONForArgument();
     String expression = null;
     String encoding = null;
@@ -340,9 +354,9 @@ public class CryptolValue {
       switch (type) {
         case BIT:
           if (bit) {
-            return "True";
+            return "True : Bit";
           } else {
-            return "False";
+            return "False : Bit";
           }
         case WORD:
           if (0 == size % 4) {
@@ -350,20 +364,22 @@ public class CryptolValue {
             while (size / 4 > s.length()) {
               s = "0" + s;
             }
-            return "0x" + s;
+            return "0x" + s + " [" + size + "]";
           }
           if (0 == size % 3) {
             String s = bigInt.toString(8);
             while (size / 3 > s.length()) {
               s = "0" + s;
             }
-            return "0o" + s;
+            return "0o" + s + " [" + size + "]";
           }
           String s = bigInt.toString(2);
           while (size > s.length()) {
             s = "0" + s;
           }
-          return "0b" + s;
+          return "0b" + s + " [" + size + "]";
+        case RESIDUE:
+          return bigInt.toString(10) + " : " + ((0 == modulus.signum()) ? "Integer" : ("Z " + modulus.toString(10)));
         default:
           throw new UnsupportedOperationException("Conversion to String unimplemented.");
       }

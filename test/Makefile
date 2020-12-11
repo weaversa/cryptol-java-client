@@ -17,8 +17,6 @@ JAVA = java $(CLASSPATH) $(SYSPROPS)
 
 
 default:
-	$(JAVAC) Hammer.java
-	$(JAVA) Hammer
 	$(JAVAC) CryptolSequenceTest.java
 	$(JAVA) CryptolSequenceTest
 	$(JAVAC) sha224.java
@@ -27,6 +25,8 @@ default:
 	$(JAVA) ModuleSpecificCaaSTest
 	$(JAVAC) PrimitiveCaaSTest.java
 	$(JAVA) PrimitiveCaaSTest
+	$(JAVAC) Hammer.java
+	$(JAVA) Hammer
 
 clean:
 	killall -v cryptol-remote-api || true

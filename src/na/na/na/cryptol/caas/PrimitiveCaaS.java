@@ -129,7 +129,7 @@ public class PrimitiveCaaS {
         System.err.println(message);
         System.err.println("*****************************");
         System.err.println();
-        throw new CaaSException("Cryptol error " + code + ": " + message);
+        return cryptolOutput;
       }
       System.err.println();
       System.err.println("*****************************");

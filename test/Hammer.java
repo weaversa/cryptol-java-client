@@ -10,6 +10,11 @@ public class Hammer {
     
     Random random = new Random();
     
+    {
+      CryptolValue x = new CryptolValue(0, random);
+      CryptolValue y = SUITE_B.call("aes255EncryptSchedule", x);
+    }
+    
     for (int i = 0; i < Integer.MAX_VALUE; i++) {
       System.out.print(i + "...\r");
       CryptolValue k = new CryptolValue(256, random);
